@@ -1,0 +1,28 @@
+name: eneo
+services:
+
+  frontend:
+    container_name: eneo-frontend
+    build:
+      context: ./eneo-chat-bot
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - eneo
+
+  backend:
+    container_name: eneo-backend
+    build:
+      context: ./eneo-chatbot-api-backend
+    expose:
+      - "3001"
+    env_file:
+      - ./eneo-chatbot-api-backend/.env
+    networks:
+      - eneo
+
+networks:
+  eneo:
+    driver: bridge
