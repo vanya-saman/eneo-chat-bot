@@ -4,7 +4,6 @@ import aiIcon from "../assets/ai_icon.png"
 
 function Message(props) {
     const message = props.message;
-    const darkMode = props.darkMode;
 
 
     return (
@@ -22,7 +21,7 @@ function Message(props) {
 
                 <div className="message-footer-container">
                     {message.speaker === "ai" && (
-                        <CopyButton text={message.text} darkMode={darkMode} />
+                        <CopyButton text={message.text} />
                     )}
                     <div className="date-display">
                         {message.time}

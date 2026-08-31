@@ -1,5 +1,4 @@
 export default function CopyButton(props) {
-    const darkMode = props.darkMode;
     const text = props.text;
 
     const [isCopied, setCopied] = useState(false);
@@ -30,29 +29,15 @@ export default function CopyButton(props) {
         }
     };
 
-    function resolveCopyIcon(){
-        if (isCopied) {
-            return darkMode ? copyOkDark : copyOk;
-        } else {
-            return darkMode ? copyIconDark : copyIcon;
-        }
-    }
-
     return(
         <div className="copy-button-container">
-            <img className="copy-icon" src={resolveCopyIcon()} alt="copy_button" onClick={handleCopy}/>
+            <img className="copy-icon" src={isCopied ? copyOk : copyIcon} alt="copy_button" onClick={handleCopy}/>
         </div>
 );
 
-    // return (<button className="copy-button" onClick={handleCopy}>
-    //         {isCopied ? "✅" : "📋"}
-    //     </button>
-    // );
+
 }
 import {useState, useEffect} from "react";
 import './CopyButton.css';
 import copyIcon from "../assets/copy_button.png"
-import copyIconDark from "../assets/copy_button_dark.png"
 import copyOk from "../assets/copy_ok.png"
-
-import copyOkDark from "../assets/copy_ok_dark.png"

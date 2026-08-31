@@ -7,32 +7,19 @@ html {
 }
 
 :root {
-    --bg-body: #f5f5f5;
+    --bg-body: #e2e2e2;
     --bg-chat: #ffffff;
-    --bg-user-bubble: #e1ddd7;
+    --bg-user-bubble: rgba(245, 135, 79, 0.6);
     --bg-ai-bubble: transparent;
     --bg-input: #ffffff;
     --text-primary: #000000;
-    --text-secondary: #2e2e2e;
+    --text-secondary: #4c4c4c;
     --border: #d9d9d9;
-    --button-bg: #cdcac5;
-    --button-hover-bg: #aaa7a1;
+    --button-bg: rgba(68, 180, 141);
+    --button-hover-bg: rgba(68, 180, 141, 0.8);
     --button-text: #000000;
 }
 
-:root[data-theme="dark"] {
-    --bg-body: #353535;
-    --bg-chat: #202020;
-    --bg-user-bubble: #454545;
-    --bg-ai-bubble: transparent;
-    --bg-input: #2a2a2a;
-    --text-primary: #ffffff;
-    --text-secondary: #bdbdbd;
-    --border: #454545;
-    --button-bg: #595959;
-    --button-hover-bg: #676767;
-    --button-text: #ffffff;
-}
 
 /* ---------- Global ---------- */
 
@@ -40,7 +27,7 @@ body,
 textarea,
 input,
 button {
-    font-family: "Inter", sans-serif;
+    font-family: "Montserrat Medium ", sans-serif;
 }
 
 body {
@@ -54,7 +41,7 @@ h1 {
 }
 
 
-/* ---------- App ---------- */
+/* ---------- ChatBox ---------- */
 
 .app {
     min-height: 90vh;
@@ -88,8 +75,50 @@ h1 {
     transition: ease-in-out 0.2s;
 }
 
+.header-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 10px 0 10px 0;
+}
+
 .chat-header {
     padding: 5px 25px;
+    background-color: rgba(245, 135, 79, 0.6);
+}
+
+.header-buttons {
+    display: flex;
+    flex-direction: row;
+
+}
+
+.header-buttons img {
+
+    height: 30px;
+    margin-left: 30px;
+    border-radius: 50%;
+    padding: 5px;
+}
+
+.header-buttons img:hover {
+    cursor: pointer;
+    background-color: rgb(245, 135, 79);
+
+}
+
+.header-title {
+    display: flex;
+    flex-direction: row;
+}
+
+.header-title img {
+    height: 1.6em;
+    margin-right: 10px;
+}
+
+.header-title h1 {
+    margin-top: 4px;
 }
 
 
@@ -241,8 +270,6 @@ textarea::placeholder {
     color: var(--button-text);
 
     font-size: 16px;
-    font-weight: bold;
-
     cursor: pointer;
 }
 
@@ -289,9 +316,6 @@ textarea::placeholder {
         transition: ease-in-out 0.2s;
     }
 
-    .chat-header {
-        padding: 16px;
-    }
 
     .messages {
         padding: 16px;
@@ -338,7 +362,7 @@ textarea::placeholder {
     }
 }
 
-.ai-icon{
+.ai-icon {
     height: 30px;
     width: 30px;
     margin-top: 5px;
