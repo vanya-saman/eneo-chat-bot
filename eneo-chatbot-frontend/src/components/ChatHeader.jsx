@@ -7,7 +7,6 @@ function ChatHeader() {
         <header className="chat-header">
             <div className="header-container">
                 <div className="header-title">
-                    <img src={herrljungaIcon} alt="herrljunga"/>
                     <h1>Herrljunga Chatt</h1>
                 </div>
                 <div className="header-buttons">

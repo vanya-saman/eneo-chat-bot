@@ -230,6 +230,7 @@ h1 {
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: 12px;
+    box-shadow: rgb(25 25 25 / 0.15) 0px 8px 15px;
 }
 
 .input-area textarea {
@@ -257,6 +258,11 @@ h1 {
 .input-actions {
     display: flex;
     justify-content: flex-end;
+}
+
+button:active,
+img:active {
+    transform: scale(0.95);
 }
 
 .input-area button {
