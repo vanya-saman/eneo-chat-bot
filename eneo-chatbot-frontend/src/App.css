@@ -1,3 +1,7 @@
+/* ==========================================================================
+   Reset & variables
+   ========================================================================== */
+
 * {
     box-sizing: border-box;
 }
@@ -7,27 +11,31 @@ html {
 }
 
 :root {
+    --accent: rgba(245, 135, 79, 0.6);
     --bg-body: #e2e2e2;
     --bg-chat: #ffffff;
-    --bg-user-bubble: rgba(245, 135, 79, 0.6);
+    --bg-user-bubble: rgba(245, 135, 79, 0.3);
     --bg-ai-bubble: transparent;
     --bg-input: #ffffff;
     --text-primary: #000000;
     --text-secondary: #4c4c4c;
     --border: #d9d9d9;
-    --button-bg: rgba(68, 180, 141);
-    --button-hover-bg: rgba(68, 180, 141, 0.8);
+    --button-bg: rgba(245, 135, 79, 0.6);
+    --button-hover-bg: rgba(245, 135, 79, 0.4);
     --button-text: #000000;
+
 }
 
 
-/* ---------- Global ---------- */
+/* ==========================================================================
+   Base
+   ========================================================================== */
 
 body,
 textarea,
 input,
 button {
-    font-family: "Montserrat Medium ", sans-serif;
+    font-family: "Montserrat Medium", sans-serif;
 }
 
 body {
@@ -41,7 +49,9 @@ h1 {
 }
 
 
-/* ---------- ChatBox ---------- */
+/* ==========================================================================
+   Layout
+   ========================================================================== */
 
 .app {
     min-height: 90vh;
@@ -50,9 +60,6 @@ h1 {
     align-items: center;
     padding: 20px;
 }
-
-
-/* ---------- Chat ---------- */
 
 .chat {
     width: 100%;
@@ -75,36 +82,21 @@ h1 {
     transition: ease-in-out 0.2s;
 }
 
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.chat-header {
+    padding: 5px 25px;
+    background-color: var(--accent);
+}
+
 .header-container {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    margin: 10px 0 10px 0;
-}
-
-.chat-header {
-    padding: 5px 25px;
-    background-color: rgba(245, 135, 79, 0.6);
-}
-
-.header-buttons {
-    display: flex;
-    flex-direction: row;
-
-}
-
-.header-buttons img {
-
-    height: 30px;
-    margin-left: 30px;
-    border-radius: 50%;
-    padding: 5px;
-}
-
-.header-buttons img:hover {
-    cursor: pointer;
-    background-color: rgb(245, 135, 79);
-
+    margin: 10px 0;
 }
 
 .header-title {
@@ -121,8 +113,27 @@ h1 {
     margin-top: 4px;
 }
 
+.header-buttons {
+    display: flex;
+    flex-direction: row;
+}
 
-/* ---------- Messages ---------- */
+.header-buttons img {
+    height: 30px;
+    margin-left: 30px;
+    border-radius: 50%;
+    padding: 5px;
+}
+
+.header-buttons img:hover {
+    cursor: pointer;
+    background-color: rgb(245, 135, 79);
+}
+
+
+/* ==========================================================================
+   Messages
+   ========================================================================== */
 
 .messages {
     flex: 1;
@@ -150,6 +161,12 @@ h1 {
 
 .message.ai {
     justify-content: flex-start;
+}
+
+.ai-icon {
+    height: 30px;
+    width: 30px;
+    margin-top: 5px;
 }
 
 .bubble {
@@ -181,30 +198,10 @@ h1 {
     font-style: italic;
 }
 
-
-/* ---------- Message footer ---------- */
-
 .message-footer-container {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-}
-
-.copy-button {
-    background: transparent;
-    border: none;
-
-    color: var(--text-secondary);
-
-    font-size: 10px;
-    cursor: pointer;
-
-    padding: 4px 0;
-    margin-top: 6px;
-
-    align-self: flex-start;
-
-    transition: color 0.2s ease;
 }
 
 .date-display {
@@ -215,7 +212,9 @@ h1 {
 }
 
 
-/* ---------- Input ---------- */
+/* ==========================================================================
+   Input area
+   ========================================================================== */
 
 .input-area {
     display: flex;
@@ -247,17 +246,17 @@ h1 {
     color: var(--text-primary);
 }
 
-textarea::placeholder {
+.input-area textarea::placeholder {
     color: var(--text-secondary);
+}
+
+.input-area textarea:focus {
+    border-color: #2563eb;
 }
 
 .input-actions {
     display: flex;
     justify-content: flex-end;
-}
-
-.input-area input:focus {
-    border-color: #2563eb;
 }
 
 .input-area button {
@@ -273,33 +272,16 @@ textarea::placeholder {
     cursor: pointer;
 }
 
-
-/* ---------- Theme button ---------- */
-
-.button {
-    background-color: var(--button-bg);
-    border-radius: 5px;
-    float: right;
-    font-size: 14px;
-    margin-right: 0;
-    padding: 8px;
-    margin-top: 10px;
-    margin-left: 15px;
-
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-}
-
-.button:hover {
-    background-color: var(--button-hover-bg);
+.input-area button:hover {
+    background: var(--button-hover-bg);
 }
 
 
-/* ---------- Tablet / mobile ---------- */
+/* ==========================================================================
+   Responsive: tablet / mobile
+   ========================================================================== */
 
 @media (max-width: 768px) {
-
     .app {
         min-height: 100dvh;
         padding: 0;
@@ -313,9 +295,7 @@ textarea::placeholder {
         margin: 0;
 
         border-radius: 0;
-        transition: ease-in-out 0.2s;
     }
-
 
     .messages {
         padding: 16px;
@@ -337,20 +317,16 @@ textarea::placeholder {
 
         font-size: 18px;
     }
-
-    .button {
-        font-size: 16px;
-    }
 }
 
 
-/* ---------- Large screens ---------- */
+/* ==========================================================================
+   Responsive: large screens
+   ========================================================================== */
 
 @media (min-width: 1200px) {
-
     .chat {
         max-width: 800px;
-        transition: ease-in-out 0.2s;
     }
 
     .messages {
@@ -360,15 +336,4 @@ textarea::placeholder {
     .bubble {
         font-size: 15px;
     }
-}
-
-.ai-icon {
-    height: 30px;
-    width: 30px;
-    margin-top: 5px;
-
-}
-
-.input-area button:hover {
-    background: var(--button-hover-bg);
 }

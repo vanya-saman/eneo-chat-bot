@@ -1,16 +1,13 @@
 import ReactMarkdown from "react-markdown";
 import CopyButton from "./CopyButton.jsx";
-import aiIcon from "../assets/ai_icon.png"
+import aiIcon from "../assets/ai_icon.png";
 
-function Message(props) {
-    const message = props.message;
-
+function Message({message}) {
+    const isAi = message.speaker === "ai";
 
     return (
-        <div
-            className={`message ${message.speaker}`}
-        >
-            {message.speaker === "ai" && (
+        <div className={`message ${message.speaker}`}>
+            {isAi && (
                 <img className="ai-icon" src={aiIcon} alt="Ai icon"/>
             )}
 
@@ -20,9 +17,7 @@ function Message(props) {
                 </ReactMarkdown>
 
                 <div className="message-footer-container">
-                    {message.speaker === "ai" && (
-                        <CopyButton text={message.text} />
-                    )}
+                    {isAi && <CopyButton text={message.text}/>}
                     <div className="date-display">
                         {message.time}
                     </div>
@@ -30,7 +25,6 @@ function Message(props) {
             </div>
         </div>
     );
-
 }
 
 export default Message;

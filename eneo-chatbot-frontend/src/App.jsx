@@ -1,11 +1,7 @@
-import ChatBox from "./ChatBox.jsx"
+import ChatBox from "./components/ChatBox.jsx";
 
-function App(){
-
-    return (
-        <ChatBox/>
-    )
-
+function App() {
+    return <ChatBox/>;
 }
 
 export default App;
