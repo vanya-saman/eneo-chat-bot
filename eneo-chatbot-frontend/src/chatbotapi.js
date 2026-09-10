@@ -1,4 +1,4 @@
-const baseUrl = "/api/chat"
+const baseUrl = "/eneo-chat-bot/api/chat"
 
 let sessionId = null;
 
