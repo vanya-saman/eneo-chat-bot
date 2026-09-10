@@ -1,4 +1,4 @@
-const BASE_URL = "/api/chat";
+const BASE_URL = "/eneo-chat-bot/api/chat";
 
 // Session id for the current chat. Lives here (rather than in component
 // state) because it's plumbing for the API layer, not UI state.
