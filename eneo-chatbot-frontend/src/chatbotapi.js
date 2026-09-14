@@ -1,14 +1,23 @@
-const baseUrl = "/eneo-chat-bot/api/chat"
-
+const baseUrl = "http://localhost:3001/api/chat"
+const fallbackAssistantId = "3f0c5835-8afb-424a-b829-0c8f8d5d32fa"
 let sessionId = null;
+const params = new URLSearchParams(window.location.search);
+const assistantId = params.get("assistant_id") ?? fallbackAssistantId;
+
+if (assistantId === fallbackAssistantId) {
+    console.log("Hittade ingen assistent ID. Använder fallback!");
+}
 
 export async function getAssistantGreeting() {
-
     const resp = await fetch(baseUrl + "/greeting/", {
-        method: "GET",
+        method: 'POST',
         headers: {
-            "Accept": "application/json"
-        }
+            "Accept": "application/json",
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            "assistant_id": assistantId
+        })
     })
 
     const data = await resp.json();
@@ -56,7 +65,8 @@ async function getMessage(input) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: input
+                "message": input,
+                "assistant_id": assistantId
             })
         }
 
@@ -93,7 +103,7 @@ return data.response;
 async function createNewSession(input) {
     console.log("[API] No session exists. Creating new session.");
 
-    const url = `${baseUrl}/session/`;
+    const url = `${baseUrl}/session`;
 
     console.log("[API] POST create session", {
         url,
@@ -108,7 +118,8 @@ async function createNewSession(input) {
         },
         body: JSON.stringify(
             {
-                "message": input
+                "message": input,
+                "assistant_id": assistantId
             }
         )
     });
