@@ -1,4 +1,4 @@
-const baseUrl = "http://localhost:3001/api/chat"
+const baseUrl = "/eneo-chat-bot/api/chat"
 const fallbackAssistantId = "3f0c5835-8afb-424a-b829-0c8f8d5d32fa"
 let sessionId = null;
 const params = new URLSearchParams(window.location.search);
