@@ -15,11 +15,13 @@ const {
 const router = express.Router();
 
 
-router.get("/greeting", async (req, res) => {
+router.post("/greeting", async (req, res) => {
     try {
         console.log("Kontaktar API")
+        const assistantId = req.body.assistant_id || null;
+        const eneoResponse = await fetchAssistantGreeting(assistantId);
 
-        const eneoResponse = await fetchAssistantGreeting();
+        console.log(assistantId)
 
         console.log("Hämtade data")
 
@@ -44,17 +46,21 @@ router.post("/session", async (req, res) => {
 
     try {
 
-        const {message} = req.body || {};
+        const message = req.body.message || null;
+        const assistantId = req.body.assistant_id || null;
 
-        if (!message) {
+        console.log(message)
+        console.log(assistantId)
+
+        if (!message || !assistantId) {
             return res.status(400).json({
-                error: "Meddelande saknas"
+                error: "Meddelande eller assistant ID saknas"
             });
         }
 
         // Första meddelandet skapar samtidigt ENEO-sessionen
         console.log("Kontaktar api")
-        const eneoResponse = await createSession(message);
+        const eneoResponse = await createSession(message, assistantId);
         console.log("klar")
 
         /*
@@ -96,11 +102,15 @@ router.post("/:sessionId/message", async (req, res) => {
     try {
 
         const {sessionId} = req.params;
-        const {message} = req.body;
+        const message = req.body.message || null;
+        const assistantId = req.body.assistant_id || null;
 
-        if (!message) {
+        console.log(message)
+        console.log(assistantId)
+
+        if (!message || !assistantId) {
             return res.status(400).json({
-                error: "Meddelande saknas"
+                error: "Meddelande eller assistant ID saknas"
             });
         }
 
@@ -114,7 +124,8 @@ router.post("/:sessionId/message", async (req, res) => {
 
         const eneoResponse = await sendMessage(
             message,
-            sessionId
+            sessionId,
+            assistantId
         );
 
         return res.json({

@@ -1,23 +1,14 @@
 const { getSession } = require("../sessions/sessionStore");
 
 const apiKey = process.env.API_KEY;
-const assistantId = process.env.ASSISTANT_ID;
 
-const messageUrl =
-    process.env.ENEO_API_BASE_URL +
-    "/assistants/" +
-    assistantId +
-    "/";
+
 
 const conversationsUrl =
     process.env.ENEO_API_BASE_URL +
     "/conversations/";
 
-const greetingUrl =
-    process.env.ENEO_API_BASE_URL +
-    "/assistants/" +
-    assistantId + "/"
-;
+
 
 const apiHeader = {
     "X-Api-Key": apiKey,
@@ -26,7 +17,7 @@ const apiHeader = {
 };
 
 
-async function createSession(input) {
+async function createSession(input, assistantId) {
 
     const response = await fetch(conversationsUrl, {
         method: "POST",
@@ -49,7 +40,12 @@ async function createSession(input) {
 }
 
 
-async function sendMessage(input, proxySessionId) {
+async function sendMessage(input, proxySessionId, assistantId) {
+    const messageUrl =
+        process.env.ENEO_API_BASE_URL +
+        "/assistants/" +
+        assistantId +
+        "/";
 
     const eneoSessionId = getSession(proxySessionId);
 
@@ -81,7 +77,13 @@ async function sendMessage(input, proxySessionId) {
     return response.json();
 }
 
-async function fetchAssistantGreeting(){
+async function fetchAssistantGreeting(assistantId) {
+    const greetingUrl =
+        process.env.ENEO_API_BASE_URL +
+        "/assistants/" +
+        assistantId + "/"
+    ;
+
     const resp = await fetch(greetingUrl, {
         headers: {
             "X-Api-Key": apiKey,
