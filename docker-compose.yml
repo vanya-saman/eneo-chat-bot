@@ -1,16 +1,17 @@
-name: eneo
 services:
-
   frontend:
     container_name: eneo-frontend
     build:
       context: ./eneo-chatbot-frontend
-    ports:
-      - "8080:80"
+
+    expose:
+      - "80"
     depends_on:
       - backend
+    restart: unless-stopped
     networks:
       - eneo
+      - mcp-net
 
   backend:
     container_name: eneo-backend
@@ -20,9 +21,13 @@ services:
       - "3001"
     env_file:
       - ./eneo-chatbot-api-backend/.env
+    restart: unless-stopped
     networks:
       - eneo
 
 networks:
   eneo:
     driver: bridge
+
+  mcp-net:
+    external: true
