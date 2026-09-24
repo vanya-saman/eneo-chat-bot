@@ -87,7 +87,6 @@ async function getMessage(input) {
             statusText: resp.statusText,
         });
 
-        alert("Kunde inte hämta meddelande");
         throw new Error("Could not fetch message");
     }
 
@@ -136,7 +135,6 @@ async function createNewSession(input) {
             statusText: resp.statusText,
         });
 
-        alert("Kunde inte hämta meddelande");
         throw new Error("Could not fetch message");
     }
 

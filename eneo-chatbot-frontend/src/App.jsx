@@ -15,9 +15,9 @@ function App() {
         createNewSessionAndAddGreeting();
     }, []);
 
-    function createNewSessionAndAddGreeting(){
+    function createNewSessionAndAddGreeting() {
         getAssistantGreeting().then(greeting => {
-            setMessages((messages) => [...messages, createMessageObject("ai",greeting)]);
+            setMessages((messages) => [...messages, createMessageObject("ai", greeting)]);
         })
     }
 
@@ -36,24 +36,6 @@ function App() {
 
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-
-    // Dark mode settings ----------------------------------------------------
-
-    const [darkMode, setDarkMode] = useState(() => {
-        const savedTheme = localStorage.getItem("theme");
-        console.log("[Theme] Saved theme:", savedTheme);
-
-        return savedTheme === "dark";
-    });
-
-    useEffect(() => {
-        const theme = darkMode ? "dark" : "light";
-
-        console.log("[Theme] Changing theme to:", theme);
-
-        document.documentElement.dataset.theme = theme;
-        localStorage.setItem("theme", theme);
-    }, [darkMode]);
 
     // ------------------------------------------------------------------------------
 
@@ -112,33 +94,6 @@ function App() {
     return (
         <main className="app">
             <section className="chat">
-                <header className="chat-header">
-
-                    <button className="button"
-                        onClick={() => {
-                            setMessages([])
-                            removeSession();
-                            greetingLoaded.current = false;
-                            createNewSessionAndAddGreeting()
-                        }}>
-                        Ny chatt
-                    </button>
-
-                    <button
-                        className="button"
-                        onClick={() => {
-                            console.log("[Theme] Toggle clicked. New value:", !darkMode);
-                            setDarkMode(!darkMode);
-                        }}
-                    >
-                        {darkMode ? "Ljust läge" : "Mörkt läge"}
-                    </button>
-
-
-                    <div>
-                        <h1>Eneo Chatbot</h1>
-                    </div>
-                </header>
 
                 <div className="messages">
                     {messages.length === 0 && (
@@ -148,8 +103,7 @@ function App() {
                         <Message
                             key={message.id}
                             message={message}
-                            darkMode={darkMode}>
-                        </Message>
+                        />
                     ))}
 
                     {isLoading && (
@@ -164,6 +118,7 @@ function App() {
                 </div>
 
                 <div className="input-area">
+
                     <textarea
                         value={input}
                         placeholder="Ställ en fråga..."
