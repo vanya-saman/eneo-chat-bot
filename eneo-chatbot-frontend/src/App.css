@@ -2,6 +2,14 @@
     box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
 html {
     font-size: 16px;
 }
@@ -34,6 +42,7 @@ html {
     --button-text: #ffffff;
 }
 
+
 /* ---------- Global ---------- */
 
 body,
@@ -44,23 +53,27 @@ button {
 }
 
 body {
-    margin: 0;
     background-color: var(--bg-body);
     color: var(--text-primary);
+    overflow: hidden;
 }
 
 h1 {
     font-size: 1.25rem;
+    margin: 0;
 }
 
 
 /* ---------- App ---------- */
 
 .app {
-    min-height: 90vh;
+    width: 100%;
+    height: 100dvh;
+
     display: flex;
     justify-content: center;
     align-items: center;
+
     padding: 20px;
 }
 
@@ -70,12 +83,10 @@ h1 {
 .chat {
     width: 100%;
     max-width: 700px;
-    height: 90vh;
+    height: min(90dvh, 900px);
 
     display: flex;
     flex-direction: column;
-
-    margin: 10px auto;
 
     background-color: var(--bg-chat);
     color: var(--text-primary);
@@ -84,12 +95,16 @@ h1 {
     overflow: hidden;
 
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(2px);
-    transition: ease-in-out 0.2s;
+
+    transition: 0.2s ease-in-out;
 }
 
+
+/* ---------- Header ---------- */
+
 .chat-header {
-    padding: 5px 25px;
+    flex-shrink: 0;
+    padding: 14px 25px;
 }
 
 
@@ -97,7 +112,10 @@ h1 {
 
 .messages {
     flex: 1;
+    min-height: 0;
+
     overflow-y: auto;
+    overflow-x: hidden;
 
     display: flex;
     flex-direction: column;
@@ -108,6 +126,8 @@ h1 {
 
 .message {
     display: flex;
+    width: 100%;
+    min-width: 0;
 }
 
 .message p {
@@ -127,13 +147,17 @@ h1 {
     display: flex;
     flex-direction: column;
 
+    min-width: 0;
     max-width: 85%;
+
     padding: 8px 16px;
 
     border-radius: 20px;
+
     line-height: 1.5;
 
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .user .bubble {
@@ -153,12 +177,38 @@ h1 {
 }
 
 
+/* Prevent markdown content from overflowing */
+
+.bubble pre {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.bubble code {
+    overflow-wrap: anywhere;
+}
+
+.bubble img {
+    max-width: 100%;
+    height: auto;
+}
+
+.bubble table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+
 /* ---------- Message footer ---------- */
 
 .message-footer-container {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: flex-end;
+
+    gap: 8px;
 }
 
 .copy-button {
@@ -183,30 +233,50 @@ h1 {
 
     font-size: 10px;
     color: var(--text-secondary);
+
+    white-space: nowrap;
+}
+
+
+/* ---------- AI icon ---------- */
+
+.ai-icon {
+    flex-shrink: 0;
+
+    height: 30px;
+    width: 30px;
+
+    margin-top: 5px;
 }
 
 
 /* ---------- Input ---------- */
 
 .input-area {
+    flex-shrink: 0;
+
     display: flex;
     flex-direction: column;
+
     gap: 10px;
 
-    width: 95%;
+    width: calc(100% - 30px);
 
     margin: 0 auto 15px;
-
     padding: 12px;
 
     background: var(--bg-input);
+
     border: 1px solid var(--border);
     border-radius: 12px;
 }
 
 .input-area textarea {
+    display: block;
+
     width: 100%;
-    min-height: 80px;
+    min-height: 70px;
+    max-height: 160px;
 
     border: none;
     outline: none;
@@ -227,12 +297,8 @@ textarea::placeholder {
     justify-content: flex-end;
 }
 
-.input-area input:focus {
-    border-color: #2563eb;
-}
-
 .input-area button {
-    padding: 8px;
+    padding: 8px 12px;
 
     border: none;
     border-radius: 5px;
@@ -240,27 +306,40 @@ textarea::placeholder {
     background: var(--button-bg);
     color: var(--button-text);
 
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
 
     cursor: pointer;
 }
 
+.input-area button:hover {
+    background: var(--button-hover-bg);
+}
 
-/* ---------- Theme button ---------- */
+.input-area button:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+
+/* ---------- Header buttons ---------- */
 
 .button {
-    background-color: var(--button-bg);
-    border-radius: 5px;
     float: right;
-    font-size: 14px;
-    margin-right: 0;
-    padding: 8px;
-    margin-top: 10px;
-    margin-left: 15px;
+
+    background-color: var(--button-bg);
+    color: var(--text-primary);
 
     border: none;
-    color: var(--text-primary);
+    border-radius: 5px;
+
+    font-size: 14px;
+
+    padding: 8px;
+
+    margin-top: 0;
+    margin-left: 10px;
+
     cursor: pointer;
 }
 
@@ -269,13 +348,15 @@ textarea::placeholder {
 }
 
 
-/* ---------- Tablet / mobile ---------- */
+/* =========================================================
+   EMBED / TABLET
+   ========================================================= */
 
 @media (max-width: 768px) {
 
     .app {
-        min-height: 100dvh;
         padding: 0;
+        height: 100dvh;
     }
 
     .chat {
@@ -283,39 +364,200 @@ textarea::placeholder {
         max-width: none;
         height: 100dvh;
 
-        margin: 0;
-
         border-radius: 0;
-        transition: ease-in-out 0.2s;
+        box-shadow: none;
     }
 
     .chat-header {
-        padding: 16px;
+        padding: 14px 16px;
     }
 
     .messages {
         padding: 16px;
-        font-size: 18px;
     }
 
     .bubble {
-        max-width: 95%;
-        font-size: 18px;
+        max-width: 90%;
+        padding: 8px 12px;
     }
 
-    .input-area textarea {
-        font-size: 18px;
+    .input-area {
+        width: calc(100% - 24px);
+        margin-bottom: 12px;
+    }
+}
+
+
+/* =========================================================
+   SMALL EMBED
+   Typical narrow iframe / phone
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+    html {
+        font-size: 15px;
     }
 
-    .input-area button {
-        min-height: 36px;
-        padding: 8px;
+    .chat-header {
+        padding: 10px 12px;
+    }
 
-        font-size: 18px;
+    h1 {
+        font-size: 1.05rem;
+        line-height: 32px;
     }
 
     .button {
-        font-size: 16px;
+        font-size: 12px;
+
+        padding: 6px 8px;
+        margin-left: 6px;
+    }
+
+    .messages {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .bubble {
+        max-width: 92%;
+
+        padding: 7px 10px;
+
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .ai-icon {
+        width: 25px;
+        height: 25px;
+
+        margin-top: 4px;
+    }
+
+    .input-area {
+        width: calc(100% - 16px);
+
+        margin-bottom: 8px;
+
+        padding: 9px;
+        gap: 6px;
+    }
+
+    .input-area textarea {
+        min-height: 55px;
+        max-height: 110px;
+
+        font-size: 14px;
+    }
+
+    .input-area button {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .date-display {
+        font-size: 9px;
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL EMBED
+   e.g. sidebar / 300px iframe
+   ========================================================= */
+
+@media (max-width: 350px) {
+
+    html {
+        font-size: 14px;
+    }
+
+    .chat-header {
+        padding: 8px;
+    }
+
+    h1 {
+        font-size: 0.95rem;
+    }
+
+    .button {
+        padding: 5px 6px;
+
+        font-size: 11px;
+
+        margin-left: 4px;
+    }
+
+    .messages {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .bubble {
+        max-width: 94%;
+
+        padding: 6px 8px;
+
+        font-size: 13px;
+    }
+
+    .ai-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .input-area {
+        width: calc(100% - 12px);
+
+        padding: 7px;
+        margin-bottom: 6px;
+    }
+
+    .input-area textarea {
+        min-height: 45px;
+
+        font-size: 13px;
+    }
+}
+
+
+/* =========================================================
+   SHORT EMBED
+   Important for iframe that is wide but not very tall
+   ========================================================= */
+
+@media (max-height: 600px) {
+
+    .app {
+        padding: 0;
+        height: 100dvh;
+    }
+
+    .chat {
+        height: 100dvh;
+        border-radius: 0;
+    }
+
+    .chat-header {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .messages {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .input-area {
+        margin-bottom: 6px;
+        padding: 8px;
+    }
+
+    .input-area textarea {
+        min-height: 42px;
+        max-height: 70px;
     }
 }
 
@@ -326,25 +568,9 @@ textarea::placeholder {
 
     .chat {
         max-width: 800px;
-        transition: ease-in-out 0.2s;
     }
 
     .messages {
         padding: 32px;
     }
-
-    .bubble {
-        font-size: 15px;
-    }
-}
-
-.ai-icon{
-    height: 30px;
-    width: 30px;
-    margin-top: 5px;
-
-}
-
-.input-area button:hover {
-    background: var(--button-hover-bg);
 }

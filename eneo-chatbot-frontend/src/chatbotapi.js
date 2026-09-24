@@ -1,5 +1,5 @@
 const baseUrl = "/eneo-chat-bot/api/chat"
-const fallbackAssistantId = "3f0c5835-8afb-424a-b829-0c8f8d5d32fa"
+const fallbackAssistantId = "4e75ea5b-271b-4bf5-9c01-e76909c549ec"
 let sessionId = null;
 const params = new URLSearchParams(window.location.search);
 const assistantId = params.get("assistant_id") ?? fallbackAssistantId;
@@ -19,6 +19,10 @@ export async function getAssistantGreeting() {
             "assistant_id": assistantId
         })
     })
+
+    if(!resp.ok) {
+        return "Kunde inte kontakta AI"
+    }
 
     const data = await resp.json();
     return data?.greeting;
@@ -59,45 +63,42 @@ async function getMessage(input) {
     });
 
     const resp = await fetch(url, {
-            method: 'POST',
-            headers: {
-                "Accept": "application/json",
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                "message": input,
-                "assistant_id": assistantId
-            })
-        }
+                method: 'POST',
+                headers: {
+                    "Accept": "application/json",
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "message": input,
+                    "assistant_id": assistantId
+                })
+            }
+        )
+    ;
 
-
-
-)
-;
-
-console.log("[API] Existing session response", {
-    status: resp.status,
-    ok: resp.ok,
-});
-
-if (!resp.ok) {
-    console.error("[API] Failed to fetch message", {
+    console.log("[API] Existing session response", {
         status: resp.status,
-        statusText: resp.statusText,
+        ok: resp.ok,
     });
 
-    alert("Kunde inte hämta meddelande");
-    throw new Error("Could not fetch message");
-}
+    if (!resp.ok) {
+        console.error("[API] Failed to fetch message", {
+            status: resp.status,
+            statusText: resp.statusText,
+        });
 
-const data = await resp.json();
+        alert("Kunde inte hämta meddelande");
+        throw new Error("Could not fetch message");
+    }
 
-console.log("[API] AI response received", {
-    hasAnswer: Boolean(data.response),
-    answerLength: data.response?.length,
-});
+    const data = await resp.json();
 
-return data.response;
+    console.log("[API] AI response received", {
+        hasAnswer: Boolean(data.response),
+        answerLength: data.response?.length,
+    });
+
+    return data.response;
 }
 
 async function createNewSession(input) {
