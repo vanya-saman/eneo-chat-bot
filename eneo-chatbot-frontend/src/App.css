@@ -17,7 +17,7 @@ html {
 :root {
     --bg-body: #f5f5f5;
     --bg-chat: #ffffff;
-    --bg-user-bubble: #e1ddd7;
+    --bg-user-bubble: rgba(0, 74, 100, 0.3);
     --bg-ai-bubble: transparent;
     --bg-input: #ffffff;
     --text-primary: #000000;
@@ -308,12 +308,17 @@ textarea::placeholder {
 
     font-size: 15px;
     font-weight: bold;
-
     cursor: pointer;
 }
 
 .input-area button:hover {
     background: var(--button-hover-bg);
+    transition: 200ms ease;
+
+}
+.input-area button:active {
+    transform: translateY(1px);
+    transition: 200ms ease;
 }
 
 .input-area button:disabled {
