@@ -47,6 +47,8 @@ async function fetchAssistantIcon(iconId) {
         iconId +
         "/";
 
+    console.log(`Fetching ${iconUrl}`);
+
     const response = await fetch(iconUrl, {
         headers: {
             "X-Api-Key": apiKey,

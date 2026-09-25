@@ -22,20 +22,12 @@ router.post("/greeting", async (req, res) => {
         const assistantId = req.body.assistant_id || null;
         const eneoResponse = await fetchAssistantGreeting(assistantId);
 
-        console.log(assistantId)
-
         console.log("Hämtade data")
 
-        const greeting =
-            eneoResponse?.description ??
-            "Hej! Vad kan jag hjälpa dig med idag?";
-
-        const iconId = eneoResponse?.icon_id;
 
         return res.json({
-            iconUrl: iconId
-                ? `/api/chat/icon/${iconId}`
-                : null
+            greeting: eneoResponse?.description ?? "Hej! Vad kan jag hjälpa dig med idag?",
+            ai_icon_id: eneoResponse?.icon_id ?? null
         })
 
     } catch (error) {

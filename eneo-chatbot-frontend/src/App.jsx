@@ -1,22 +1,35 @@
 import {useEffect, useRef, useState} from 'react'
 import './App.css'
-import {createMessageObject, getAssistantGreeting, getMessageFromAi, removeSession} from './chatbotapi.js'
+import {
+    createMessageObject,
+    fetchAssistant,
+    getAssistantIcon,
+    getMessageFromAi,
+    removeSession
+} from './chatbotapi.js'
 import Message from "./components/Message.jsx";
+import icon from "./assets/ai_icon.png"
 
 function App() {
-
+    const [aiIcon, setAiIcon] = useState(icon)
     const [messages, setMessages] = useState([]);
     const greetingLoaded = useRef(false);
 
     useEffect(() => {
         if (greetingLoaded.current) return;
-
         greetingLoaded.current = true;
         createNewSessionAndAddGreeting();
     }, []);
 
     function createNewSessionAndAddGreeting() {
-        getAssistantGreeting().then(greeting => {
+        fetchAssistant().then(data => {
+            const iconId = data.iconId;
+            if(iconId){
+                getAssistantIcon(iconId).then(icon => {
+                    setAiIcon(icon);
+                })
+            }
+            const greeting = data.greeting;
             setMessages((messages) => [...messages, createMessageObject("ai", greeting)]);
         })
     }
@@ -103,6 +116,7 @@ function App() {
                         <Message
                             key={message.id}
                             message={message}
+                            aiIcon={aiIcon}
                         />
                     ))}
 

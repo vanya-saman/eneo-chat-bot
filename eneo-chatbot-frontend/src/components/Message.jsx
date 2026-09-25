@@ -1,9 +1,10 @@
 import ReactMarkdown from "react-markdown";
 import CopyButton from "./CopyButton.jsx";
-import aiIcon from "../assets/ai_icon.png"
+
 
 function Message(props) {
     const message = props.message;
+    const aiIcon = props.aiIcon;
 
 
     return (

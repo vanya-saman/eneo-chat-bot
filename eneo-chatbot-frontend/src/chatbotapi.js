@@ -3,12 +3,13 @@ const fallbackAssistantId = "4e75ea5b-271b-4bf5-9c01-e76909c549ec"
 let sessionId = null;
 const params = new URLSearchParams(window.location.search);
 const assistantId = params.get("assistant_id") ?? fallbackAssistantId;
+import icon from "./assets/ai_icon.png"
 
 if (assistantId === fallbackAssistantId) {
     console.log("Hittade ingen assistent ID. Använder fallback!");
 }
 
-export async function getAssistantGreeting() {
+export async function fetchAssistant() {
     const resp = await fetch(baseUrl + "/greeting/", {
         method: 'POST',
         headers: {
@@ -20,12 +21,32 @@ export async function getAssistantGreeting() {
         })
     })
 
-    if(!resp.ok) {
-        return "Kunde inte kontakta AI"
+    if (!resp.ok) {
+        return {
+            greeting: "Kunde inte kontakta AI",
+            iconId: null
+        }
     }
 
     const data = await resp.json();
-    return data?.greeting;
+
+    return {
+        greeting: data?.greeting,
+        iconId: data?.ai_icon_id
+    };
+}
+
+export async function getAssistantIcon(iconId) {
+    if (!iconId) {
+        return icon;
+    }
+    const resp = await fetch(`${baseUrl}/icon/${iconId}`)
+
+    if (!resp.ok) {
+        return icon;
+    }
+    const blob = await resp.blob();
+    return URL.createObjectURL(blob);
 }
 
 export async function getMessageFromAi(input) {
