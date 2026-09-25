@@ -3,6 +3,7 @@ const crypto = require("crypto");
 
 const {
     fetchAssistantGreeting,
+    fetchAssistantIcon,
     createSession,
     sendMessage
 } = require("../services/eneo");
@@ -29,15 +30,48 @@ router.post("/greeting", async (req, res) => {
             eneoResponse?.description ??
             "Hej! Vad kan jag hjälpa dig med idag?";
 
+        const iconId = eneoResponse?.icon_id;
+
         return res.json({
-            greeting: greeting
+            iconUrl: iconId
+                ? `/api/chat/icon/${iconId}`
+                : null
         })
 
     } catch (error) {
         console.error(error);
 
         return res.status(502).json({
-            error: "Kunde inte hämta feature"
+            error: "Kunde inte hämta assistant"
+        });
+    }
+});
+
+router.get("/icon/:iconId", async (req, res) => {
+    try {
+        const { iconId } = req.params;
+
+        const iconResponse =
+            await fetchAssistantIcon(iconId);
+
+        const contentType =
+            iconResponse.headers.get("content-type") ||
+            "image/png";
+
+        const arrayBuffer =
+            await iconResponse.arrayBuffer();
+
+        const buffer =
+            Buffer.from(arrayBuffer);
+
+        res.set("Content-Type", contentType);
+        res.send(buffer);
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(502).json({
+            error: "Kunde inte hämta assistentikon"
         });
     }
 });

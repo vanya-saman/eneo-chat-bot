@@ -40,6 +40,28 @@ async function createSession(input, assistantId) {
 }
 
 
+async function fetchAssistantIcon(iconId) {
+    const iconUrl =
+        process.env.ENEO_API_BASE_URL +
+        "/icons/" +
+        iconId +
+        "/";
+
+    const response = await fetch(iconUrl, {
+        headers: {
+            "X-Api-Key": apiKey,
+            "Accept": "image/png"
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Kunde inte hämta ikon: ${response.status}`);
+    }
+
+    return response;
+}
+
+
 async function sendMessage(input, proxySessionId, assistantId) {
     const messageUrl =
         process.env.ENEO_API_BASE_URL +
@@ -96,6 +118,8 @@ async function fetchAssistantGreeting(assistantId) {
 
 module.exports = {
     fetchAssistantGreeting,
+    fetchAssistantIcon,
     createSession,
     sendMessage
+
 };
