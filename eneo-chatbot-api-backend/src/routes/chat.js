@@ -132,9 +132,6 @@ router.post("/:sessionId/message", async (req, res) => {
         const message = req.body.message || null;
         const assistantId = req.body.assistant_id || null;
 
-        console.log(message)
-        console.log(assistantId)
-
         if (!message || !assistantId) {
             return res.status(400).json({
                 error: "Meddelande eller assistant ID saknas"

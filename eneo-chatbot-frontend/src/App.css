@@ -140,9 +140,8 @@ h1 {
 }
 
 .message.ai {
-    display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    align-items: flex-start;
 }
 
 .ai-message-header{
@@ -155,16 +154,12 @@ h1 {
 }
 
 .bubble {
-    display: flex;
-    flex-direction: column;
-
-    min-width: 0;
+    width: fit-content;
     max-width: 85%;
+    min-width: 0;
 
     padding: 8px 16px;
-
     border-radius: 20px;
-
     line-height: 1.5;
 
     overflow-wrap: anywhere;
