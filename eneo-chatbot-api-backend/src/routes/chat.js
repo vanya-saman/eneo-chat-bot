@@ -27,7 +27,8 @@ router.post("/greeting", async (req, res) => {
 
         return res.json({
             greeting: eneoResponse?.description ?? "Hej! Vad kan jag hjälpa dig med idag?",
-            ai_icon_id: eneoResponse?.icon_id ?? null
+            ai_icon_id: eneoResponse?.icon_id ?? null,
+            ai_name: eneoResponse?.name ?? null
         })
 
     } catch (error) {
