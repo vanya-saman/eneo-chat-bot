@@ -32,7 +32,8 @@ export async function fetchAssistant() {
 
     return {
         greeting: data?.greeting,
-        iconId: data?.ai_icon_id
+        iconId: data?.ai_icon_id,
+        aiName: data?.ai_name,
     };
 }
 

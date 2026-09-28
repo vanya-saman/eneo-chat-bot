@@ -5,6 +5,7 @@ import CopyButton from "./CopyButton.jsx";
 function Message(props) {
     const message = props.message;
     const aiIcon = props.aiIcon;
+    const aiName = props.aiName;
 
 
     return (
@@ -12,7 +13,10 @@ function Message(props) {
             className={`message ${message.speaker}`}
         >
             {message.speaker === "ai" && (
-                <img className="ai-icon" src={aiIcon} alt="Ai icon"/>
+                <div className={"ai-message-header"}>
+                    <img className="ai-icon" src={aiIcon} alt="Ai icon"/>
+                    {aiName && <span>{aiName}</span>}
+                </div>
             )}
 
             <div className="bubble">

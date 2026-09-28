@@ -13,6 +13,7 @@ import icon from "./assets/ai_icon.png"
 function App() {
     const [aiIcon, setAiIcon] = useState(icon)
     const [messages, setMessages] = useState([]);
+    const [aiName, setAiName] = useState(null);
     const greetingLoaded = useRef(false);
 
     useEffect(() => {
@@ -23,9 +24,11 @@ function App() {
 
     function createNewSessionAndAddGreeting() {
         fetchAssistant().then(data => {
-            const iconId = data.iconId;
-            if(iconId){
-                getAssistantIcon(iconId).then(icon => {
+            if (data.aiName){
+                setAiName(data.aiName);
+            }
+            if(data.iconId){
+                getAssistantIcon(data.iconId).then(icon => {
                     setAiIcon(icon);
                 })
             }
@@ -117,6 +120,7 @@ function App() {
                             key={message.id}
                             message={message}
                             aiIcon={aiIcon}
+                            aiName={aiName}
                         />
                     ))}
 

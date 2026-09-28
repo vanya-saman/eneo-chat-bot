@@ -140,7 +140,18 @@ h1 {
 }
 
 .message.ai {
+    display: flex;
+    flex-direction: column;
     justify-content: flex-start;
+}
+
+.ai-message-header{
+    display: flex;
+    span {
+        margin: auto auto auto 5px;
+        scale: 0.9;
+        opacity: 0.7;
+    }
 }
 
 .bubble {
@@ -158,6 +169,12 @@ h1 {
 
     overflow-wrap: anywhere;
     word-break: break-word;
+}
+
+.message.ai {
+    .bubble {
+        padding-left: 0;
+    }
 }
 
 .user .bubble {
@@ -245,8 +262,6 @@ h1 {
 
     height: 30px;
     width: 30px;
-
-    margin-top: 5px;
     border-radius: 50%;
 }
 
