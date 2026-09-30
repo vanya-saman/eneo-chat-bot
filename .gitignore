@@ -39,4 +39,3 @@ docker-compose.override.yml
 
 # Misc
 *.pid
-eneo-chatbot-frontend/src/variables.js
