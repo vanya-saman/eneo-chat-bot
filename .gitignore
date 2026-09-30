@@ -39,3 +39,5 @@ docker-compose.override.yml
 
 # Misc
 *.pid
+
+restart_chatbot_server.sh
