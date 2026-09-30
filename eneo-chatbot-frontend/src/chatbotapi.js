@@ -1,4 +1,5 @@
-const baseUrl = "/eneo-chat-bot/api/chat"
+import {baseUrl} from "./variables.js";
+
 const fallbackAssistantId = "4e75ea5b-271b-4bf5-9c01-e76909c549ec"
 let sessionId = null;
 const params = new URLSearchParams(window.location.search);
