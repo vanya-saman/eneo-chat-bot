@@ -21,18 +21,13 @@ export async function fetchAssistant() {
         },
         body: JSON.stringify({
             "assistant_id": assistantId
-        })
+        }),
+        signal: AbortSignal.timeout(10000)
     })
-
     if (!resp.ok) {
-        return {
-            greeting: "Kunde inte kontakta AI",
-            iconId: null
-        }
+        throw new Error("[ERROR] Response is not OK");
     }
-
     const data = await resp.json();
-
     return {
         greeting: data?.greeting,
         iconId: data?.ai_icon_id,

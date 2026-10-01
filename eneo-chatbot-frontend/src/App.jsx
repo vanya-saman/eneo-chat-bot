@@ -24,9 +24,7 @@ function App() {
 
     function createNewSessionAndAddGreeting() {
         fetchAssistant().then(data => {
-            if (data.aiName){
-                setAiName(data.aiName);
-            }
+            setAiName(data.aiName ? data.aiName : "Chatbot")
             if(data.iconId){
                 getAssistantIcon(data.iconId).then(icon => {
                     setAiIcon(icon);
@@ -34,7 +32,11 @@ function App() {
             }
             const greeting = data.greeting;
             setMessages((messages) => [...messages, createMessageObject("ai", greeting)]);
-        })
+        }).catch(error => {
+            console.log(error);
+            setAiName("Chatbot")
+            setMessages((messages) => [...messages, createMessageObject("ai", "Kunde inte kontakta AI. Testa att ladda om sidan.")])
+        });
     }
 
 
