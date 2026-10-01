@@ -4,8 +4,6 @@ const params = new URLSearchParams(window.location.search);
 const assistantId = params.get("assistant_id") ?? fallbackAssistantId;
 const baseUrl = params.get("server") === "false" ? "http://localhost:3001/api/chat" : "/eneo-chat-bot/api/chat"
 
-console.log(baseUrl);
-
 import icon from "./assets/ai_icon.png"
 
 if (assistantId === fallbackAssistantId) {

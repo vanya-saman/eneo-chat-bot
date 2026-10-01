@@ -17,31 +17,16 @@ html {
 :root {
     --bg-body: #f5f5f5;
     --bg-chat: #ffffff;
-    --bg-user-bubble: rgba(0, 74, 100, 0.3);
+    --bg-user-bubble: #e2e2e2;
     --bg-ai-bubble: transparent;
     --bg-input: #ffffff;
-    --text-primary: #000000;
-    --text-secondary: #2e2e2e;
+    --text-primary: #393939;
+    --text-secondary: #606060;
     --border: #d9d9d9;
-    --button-bg: #cdcac5;
-    --button-hover-bg: #aaa7a1;
-    --button-text: #000000;
-}
-
-:root[data-theme="dark"] {
-    --bg-body: #353535;
-    --bg-chat: #202020;
-    --bg-user-bubble: #454545;
-    --bg-ai-bubble: transparent;
-    --bg-input: #2a2a2a;
-    --text-primary: #ffffff;
-    --text-secondary: #bdbdbd;
-    --border: #454545;
-    --button-bg: #595959;
-    --button-hover-bg: #676767;
+    --button-bg: #02b4b7;
+    --button-hover-bg: #009597;
     --button-text: #ffffff;
 }
-
 
 /* ---------- Global ---------- */
 
@@ -50,6 +35,10 @@ textarea,
 input,
 button {
     font-family: "Montserrat Medium", sans-serif;
+}
+
+button:hover{
+    cursor: pointer;
 }
 
 body {
@@ -309,17 +298,16 @@ textarea::placeholder {
 }
 
 .input-area button {
-    padding: 8px 12px;
+    padding: 8px 25px;
 
     border: none;
-    border-radius: 5px;
+    border-radius: 9999px;
 
     background: var(--button-bg);
     color: var(--button-text);
 
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
+    font-size: 12px;
+
 }
 
 .input-area button:hover {
@@ -330,11 +318,6 @@ textarea::placeholder {
 .input-area button:active {
     transform: translateY(1px);
     transition: 200ms ease;
-}
-
-.input-area button:disabled {
-    cursor: default;
-    opacity: 0.6;
 }
 
 
