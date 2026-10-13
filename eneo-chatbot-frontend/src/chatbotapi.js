@@ -1,16 +1,18 @@
-const fallbackAssistantId = "4e75ea5b-271b-4bf5-9c01-e76909c549ec"
 let sessionId = null;
 const params = new URLSearchParams(window.location.search);
-const assistantId = params.get("assistant_id") ?? fallbackAssistantId;
+const assistantId = params.get("assistant_id") ?? null;
 const baseUrl = params.get("server") === "false" ? "http://localhost:3001/api/chat" : "/eneo-chat-bot/api/chat"
 
 import icon from "./assets/ai_icon.png"
 
-if (assistantId === fallbackAssistantId) {
-    console.log("Hittade ingen assistent ID. Använder fallback!");
-}
-
 export async function fetchAssistant() {
+
+    if(!assistantId){
+        return {
+            greeting: "Ingen assistent vald."
+        }
+    }
+
     const resp = await fetch(baseUrl + "/greeting/", {
         method: 'POST',
         headers: {
@@ -47,6 +49,10 @@ export async function getAssistantIcon(iconId) {
 }
 
 export async function getMessageFromAi(input) {
+    if(!assistantId){
+        throw Error("No assistant id for AI.")
+    }
+
     console.log("[API] getMessageFromAi called", {
         hasSession: Boolean(sessionId),
         inputLength: input?.length,

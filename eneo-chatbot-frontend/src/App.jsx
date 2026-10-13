@@ -83,11 +83,10 @@ function App() {
 
             const aiResponse = await getMessageFromAi(text);
 
+            const aiMessage = createMessageObject("ai", aiResponse);
+            setMessages((messages) => [...messages, aiMessage]);
             console.log("[Chat] AI response received:", aiResponse);
 
-            const aiMessage = createMessageObject("ai", aiResponse);
-
-            setMessages((messages) => [...messages, aiMessage]);
         } catch (error) {
             console.error("[Chat] Failed to get AI response:", error);
 
