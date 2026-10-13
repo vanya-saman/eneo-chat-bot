@@ -39,17 +39,6 @@ function App() {
         });
     }
 
-
-    // This section is for automatic scrolling down whenever a new message is created.
-
-    const messagesEndRef = useRef(null);
-
-    useEffect(() => {
-        console.log("[App] Messages updated:", messages.length);
-
-        messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
-    }, [messages]);
-
     // ------------------------------------------------------------------------------
 
     const [input, setInput] = useState("");
@@ -133,7 +122,7 @@ function App() {
                         </div>
                     )}
 
-                    <div ref={messagesEndRef}/>
+                    <div/>
                 </div>
 
                 <div className="input-area">
