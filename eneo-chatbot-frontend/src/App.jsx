@@ -47,6 +47,10 @@ function App() {
     // ------------------------------------------------------------------------------
 
     async function sendMessage() {
+        if(isLoading){
+            return;
+        }
+
         const text = input.trim();
 
         console.log("[Chat] sendMessage called");
@@ -92,16 +96,25 @@ function App() {
 
     function handleKeyDown(event) {
         if (event.key === "Enter") {
+            event.preventDefault();
             console.log("[Input] Enter pressed");
             sendMessage();
         }
     }
 
+    const messagesRef = useRef(null);
+
+    useEffect(() => {
+        const el = messagesRef.current;
+        if (!el) return;
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }, [messages, isLoading]);
+
     return (
         <main className="app">
             <section className="chat">
 
-                <div className="messages">
+                <div className="messages" ref={messagesRef}>
                     {messages.length === 0 && (
                         <p><i>Laddar...</i></p>
                     )}
@@ -132,7 +145,6 @@ function App() {
                         placeholder="Ställ en fråga..."
                         onChange={(event) => setInput(event.target.value)}
                         onKeyDown={handleKeyDown}
-                        disabled={isLoading}
                     />
 
                     <div className="input-actions">

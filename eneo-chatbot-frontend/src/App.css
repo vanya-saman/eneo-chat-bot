@@ -100,11 +100,12 @@ h1 {
 /* ---------- Messages ---------- */
 
 .messages {
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
 
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior: contain;
 
     display: flex;
     flex-direction: column;
@@ -253,6 +254,7 @@ h1 {
 /* ---------- Input ---------- */
 
 .input-area {
+    flex: 0 0 auto;
     flex-shrink: 0;
 
     display: flex;
