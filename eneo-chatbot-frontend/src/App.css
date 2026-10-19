@@ -26,6 +26,8 @@ html {
     --button-bg: #02b4b7;
     --button-hover-bg: #009597;
     --button-text: #ffffff;
+    --error: #c0392b;
+    --drop-overlay-bg: rgba(2, 180, 183, 0.08);
 }
 
 /* ---------- Global ---------- */
@@ -70,6 +72,8 @@ h1 {
 /* ---------- Chat ---------- */
 
 .chat {
+    position: relative;
+
     width: 100%;
     max-width: 700px;
     height: min(90dvh, 900px);
@@ -86,6 +90,36 @@ h1 {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
 
     transition: 0.2s ease-in-out;
+}
+
+
+/* ---------- Drag & drop overlay ---------- */
+
+.chat::after {
+    content: "Släpp bilden här";
+
+    position: absolute;
+    inset: 8px;
+    z-index: 10;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: 2px dashed var(--button-bg);
+    border-radius: 10px;
+    background: var(--drop-overlay-bg);
+
+    color: var(--button-hover-bg);
+    font-size: 1rem;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease;
+}
+
+.chat.dragging::after {
+    opacity: 1;
 }
 
 
@@ -201,6 +235,22 @@ h1 {
     overflow-x: auto;
 }
 
+/* Image sent with a message */
+.message-image {
+    display: block;
+
+    max-height: 600px;
+    max-height: min(600px, 50dvh);
+
+    margin: 4px 0 6px;
+    border-radius: 12px;
+}
+
+/* An image-only message has an empty text block; drop its spacing */
+.bubble .message-image + p:empty {
+    display: none;
+}
+
 
 /* ---------- Message footer ---------- */
 
@@ -299,6 +349,15 @@ textarea::placeholder {
     justify-content: flex-end;
 }
 
+.input-actions-container{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+
 .input-area button {
     padding: 8px 25px;
 
@@ -320,6 +379,85 @@ textarea::placeholder {
 .input-area button:active {
     transform: translateY(1px);
     transition: 200ms ease;
+}
+
+.input-area button:disabled,
+.input-area button:disabled:hover {
+    background: var(--border);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* ---------- Attachments ---------- */
+
+/* Secondary (outlined) style so "Skicka" stays the main action */
+.input-area .attach-button {
+    background: transparent;
+    color: var(--button-hover-bg);
+    box-shadow: inset 0 0 0 1px var(--button-bg);
+}
+
+.input-area .attach-button:hover {
+    background: var(--drop-overlay-bg);
+}
+
+.input-area .attach-button:disabled,
+.input-area .attach-button:disabled:hover {
+    background: transparent;
+    color: var(--text-secondary);
+    box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.attachment-preview {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.embedded-image {
+    display: block;
+
+    height: 36px;
+    width: 36px;
+    object-fit: cover;
+
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+/* Small round × in the preview's corner (overrides the pill button style) */
+.input-area .remove-attachment {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 18px;
+    height: 18px;
+    padding: 0;
+
+    border-radius: 50%;
+    background: var(--text-primary);
+    color: var(--button-text);
+
+    font-size: 13px;
+    line-height: 1;
+}
+
+.input-area .remove-attachment:hover {
+    background: var(--error);
+}
+
+.upload-error {
+    margin: 0;
+
+    font-size: 12px;
+    color: var(--error);
 }
 
 
@@ -458,6 +596,15 @@ textarea::placeholder {
         font-size: 13px;
     }
 
+    .input-actions-container {
+        gap: 8px;
+    }
+
+    .embedded-image {
+        width: 32px;
+        height: 32px;
+    }
+
     .date-display {
         font-size: 9px;
     }
@@ -521,6 +668,16 @@ textarea::placeholder {
 
         font-size: 13px;
     }
+
+    .input-area button {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+
+    .embedded-image {
+        width: 28px;
+        height: 28px;
+    }
 }
 
 
@@ -559,6 +716,10 @@ textarea::placeholder {
     .input-area textarea {
         min-height: 42px;
         max-height: 70px;
+    }
+
+    .message-image {
+        max-height: 40dvh;
     }
 }
 

@@ -6,6 +6,8 @@ function Message(props) {
     const message = props.message;
     const aiIcon = props.aiIcon;
     const aiName = props.aiName;
+    const image = props.image;
+    const onImageLoad = props.onImageLoad;
 
 
     return (
@@ -20,6 +22,14 @@ function Message(props) {
             )}
 
             <div className="bubble">
+                {image && (
+                    <img
+                        className="message-image"
+                        src={image}
+                        alt="Message image"
+                        onLoad={onImageLoad}
+                    />
+                )}
                 <ReactMarkdown>
                     {message.text}
                 </ReactMarkdown>

@@ -5,6 +5,14 @@ const baseUrl = params.get("server") === "false" ? "http://localhost:3001/api/ch
 
 import icon from "./assets/ai_icon.png"
 
+/** Thrown when the backend reports that the image upload failed, so the UI can show a specific message. */
+export class UploadError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "UploadError";
+    }
+}
+
 export async function fetchAssistant() {
 
     if(!assistantId){
@@ -48,7 +56,16 @@ export async function getAssistantIcon(iconId) {
     return URL.createObjectURL(blob);
 }
 
-export async function getMessageFromAi(input) {
+/**
+ * Sends a message (and optionally an image) to the AI.
+ * The first message creates a session; later messages reuse it.
+ * The backend handles uploading the image to ENEO.
+ *
+ * @param {string} input
+ * @param {File|null} file
+ * @returns {Promise<string>} the AI's answer
+ */
+export async function getMessageFromAi(input, file = null) {
     if(!assistantId){
         throw Error("No assistant id for AI.")
     }
@@ -56,141 +73,74 @@ export async function getMessageFromAi(input) {
     console.log("[API] getMessageFromAi called", {
         hasSession: Boolean(sessionId),
         inputLength: input?.length,
+        hasFile: Boolean(file),
     });
-
-    return sessionId
-        ? getMessage(input)
-        : createNewSession(input);
-}
-
-export function removeSession() {
-    sessionId = null;
-}
-
-async function getMessage(input) {
-    console.log("[API] Session exists. Sending message to existing session.", {
-        sessionId,
-    });
-
 
     if (!sessionId) {
-        console.error("[API] Session ID is missing!");
-        throw new Error("Could not find session!");
+        const data = await postMessage(`${baseUrl}/session`, input, file);
+        sessionId = data.sessionId;
+        console.log("[API] New session created", {sessionId});
+        return data.response;
     }
 
-    const url = `${baseUrl}/${sessionId}/message/`;
-
-    console.log("[API] POST existing session", {
-        url,
-        sessionId
-
-    });
-
-    const resp = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    "Accept": "application/json",
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    "message": input,
-                    "assistant_id": assistantId
-                })
-            }
-        )
-    ;
-
-    console.log("[API] Existing session response", {
-        status: resp.status,
-        ok: resp.ok,
-    });
-
-    if (!resp.ok) {
-        console.error("[API] Failed to fetch message", {
-            status: resp.status,
-            statusText: resp.statusText,
-        });
-
-        throw new Error("Could not fetch message");
-    }
-
-    const data = await resp.json();
-
-    console.log("[API] AI response received", {
-        hasAnswer: Boolean(data.response),
-        answerLength: data.response?.length,
-    });
-
+    const data = await postMessage(`${baseUrl}/${sessionId}/message/`, input, file);
     return data.response;
 }
 
-async function createNewSession(input) {
-    console.log("[API] No session exists. Creating new session.");
-
-    const url = `${baseUrl}/session`;
-
-    console.log("[API] POST create session", {
-        url,
-        inputLength: input?.length,
-    });
+/**
+ * Posts the message as multipart/form-data so the image can travel in the same request.
+ * Content-Type is not set manually: the browser adds it together with the multipart boundary.
+ */
+async function postMessage(url, input, file) {
+    const formData = new FormData();
+    formData.append("message", input ?? "");
+    formData.append("assistant_id", assistantId);
+    if (file) {
+        formData.append("file", file);
+    }
 
     const resp = await fetch(url, {
         method: "POST",
         headers: {
-            "Accept": "application/json",
-            'Content-Type': 'application/json'
+            "Accept": "application/json"
         },
-        body: JSON.stringify(
-            {
-                "message": input,
-                "assistant_id": assistantId
-            }
-        )
+        body: formData
     });
 
-    console.log("[API] Create session response", {
-        status: resp.status,
-        ok: resp.ok,
-    });
+    console.log("[API] Response", {url, status: resp.status, ok: resp.ok});
 
     if (!resp.ok) {
-        console.error("[API] Failed to create session", {
-            status: resp.status,
-            statusText: resp.statusText,
-        });
-
-        throw new Error("Could not fetch message");
+        const data = await resp.json().catch(() => null);
+        if (data?.code === "UPLOAD_FAILED") {
+            throw new UploadError(data.error ?? "Upload failed");
+        }
+        throw new Error(data?.error ?? `Request failed (${resp.status})`);
     }
 
-    const data = await resp.json();
-
-    console.log("[API] New session created", {
-        sessionId: data.sessionId,
-        hasResponse: Boolean(data.response),
-        responseLength: data.response?.length,
-    });
-
-    sessionId = data.sessionId;
-
-    console.log("[API] sessionId stored:", sessionId);
-
-    return data.response;
+    return resp.json();
 }
 
 
-export function createMessageObject(speaker, text) {
+export function createMessageObject(speaker, text, file) {
+    let url;
+    if(file){
+        // Separate URL from the input preview, so clearing the preview doesn't break the chat history.
+        url = URL.createObjectURL(file);
+    }
 
     const message = {
         id: generateRandomUUID(),
         speaker: speaker,
         text: text,
-        time: parseTime(new Date())
+        time: parseTime(new Date()),
+        image: url ?? null
     };
 
     console.log("[Message] Created message", {
         id: message.id,
         speaker,
         textLength: text?.length,
+        hasImage: Boolean(url),
         time: message.time,
     });
 
@@ -199,7 +149,6 @@ export function createMessageObject(speaker, text) {
 
 function generateRandomUUID() {
     if (crypto.randomUUID) {
-        console.log("[Generating random UUID]");
         return crypto.randomUUID()
     } else {
         console.log("crypto.randomUUID not available. Using fallback");
@@ -218,11 +167,7 @@ function parseTime(time) {
     const month = formatTime(time.getMonth() + 1);
     const year = time.getFullYear();
 
-    const formattedTime = `${hours}:${minutes} ${day}-${month}-${year}`;
-
-    console.log("[Time] Parsed time:", formattedTime);
-
-    return formattedTime;
+    return `${hours}:${minutes} ${day}-${month}-${year}`;
 }
 
 
@@ -231,10 +176,5 @@ function parseTime(time) {
  * @param {number} time
  */
 function formatTime(time) {
-
-    if (time.toString().length === 1) {
-        return `0${time}`;
-    } else {
-        return time.toString();
-    }
+    return time.toString().padStart(2, "0");
 }
