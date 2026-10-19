@@ -1,25 +1,69 @@
 import {useCallback, useEffect, useState} from "react";
 
-export const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
-export const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+/**
+ * Accepted file types and their extensions.
+ * Extensions are checked too, because browsers often give .md/.csv files an empty
+ * or unusual MIME type (especially on Windows).
+ * Keep in sync with ACCEPTED_FILE_TYPES in the backend (routes/chat.js).
+ */
+export const ACCEPTED_FILE_TYPES = {
+    "image/png": [".png"],
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/gif": [".gif"],
+    "image/webp": [".webp"],
+    "application/pdf": [".pdf"],
+    "text/plain": [".txt"],
+    "text/markdown": [".md"],
+    "text/csv": [".csv"],
+};
+
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+/** Value for <input type="file" accept="...">. */
+export const ACCEPT_ATTRIBUTE = [
+    ...Object.keys(ACCEPTED_FILE_TYPES),
+    ...Object.values(ACCEPTED_FILE_TYPES).flat()
+].join(",");
+
+function getExtension(name) {
+    const dot = name?.lastIndexOf(".") ?? -1;
+    return dot >= 0 ? name.slice(dot).toLowerCase() : "";
+}
+
+export function isAcceptedFile(file) {
+    if (file.type in ACCEPTED_FILE_TYPES) {
+        return true;
+    }
+    return Object.values(ACCEPTED_FILE_TYPES).flat().includes(getExtension(file.name));
+}
+
+export function isImageFile(file) {
+    return Boolean(file?.type?.startsWith("image/")) && file.type in ACCEPTED_FILE_TYPES;
+}
 
 /**
  * Returns an error message (in Swedish, shown to the user) or null if the file is OK.
  * @param {File} file
  */
-export function validateImage(file) {
+export function validateFile(file) {
     if (!file) {
         return "Ingen fil vald.";
     }
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-        return "Endast bilder (PNG, JPEG, GIF, WebP) kan bifogas.";
+    if (!isAcceptedFile(file)) {
+        return "Endast bilder (PNG, JPEG, GIF, WebP), PDF och textfiler (TXT, MD, CSV) kan bifogas.";
     }
-    if (file.size > MAX_IMAGE_SIZE) {
-        return `Bilden är för stor (max ${MAX_IMAGE_SIZE / 1024 / 1024} MB).`;
+    if (file.size === 0) {
+        return "Filen är tom.";
+    }
+    if (file.size > MAX_FILE_SIZE) {
+        return `Filen är för stor (max ${MAX_FILE_SIZE / 1024 / 1024} MB).`;
     }
     return null;
 }
 
+/**
+ * Hook that handles attaching one file via drag & drop, paste or a file picker.
+ */
 export function useFileUpload() {
     const [file, setFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -30,7 +74,7 @@ export function useFileUpload() {
         if (!candidate) {
             return;
         }
-        const validationError = validateImage(candidate);
+        const validationError = validateFile(candidate);
         if (validationError) {
             setError(validationError);
             return;
@@ -44,9 +88,9 @@ export function useFileUpload() {
         setError(null);
     }, []);
 
-    // One preview URL per file, revoked when the file changes or the component unmounts.
+    // Thumbnail URL for images only; other files are shown by name.
     useEffect(() => {
-        if (!file) {
+        if (!file || !isImageFile(file)) {
             setPreviewUrl(null);
             return;
         }
@@ -91,10 +135,9 @@ export function useFileUpload() {
             selectFile(e.dataTransfer.files[0]);
         }
 
-        // Ctrl/Cmd+V of a screenshot. Plain text pastes are left alone.
+        // Pasting a screenshot or a copied file. Plain text pastes are left alone.
         function handlePaste(e) {
-            const pasted = Array.from(e.clipboardData?.files ?? [])
-                .find(f => f.type.startsWith("image/"));
+            const pasted = e.clipboardData?.files?.[0];
             if (pasted) {
                 e.preventDefault();
                 selectFile(pasted);

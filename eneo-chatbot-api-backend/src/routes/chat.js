@@ -20,27 +20,64 @@ const router = express.Router();
 
 // ---------- File upload handling ----------
 
-const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB, same limit as the frontend
+/**
+ * Accepted file types and their extensions. Keep in sync with the frontend (fileUpload.js).
+ * Extensions are checked too, because browsers often send .md/.csv files with an empty
+ * or generic MIME type (e.g. application/octet-stream).
+ */
+const ACCEPTED_FILE_TYPES = {
+    "image/png": [".png"],
+    "image/jpeg": [".jpg", ".jpeg"],
+    "image/gif": [".gif"],
+    "image/webp": [".webp"],
+    "application/pdf": [".pdf"],
+    "text/plain": [".txt"],
+    "text/markdown": [".md"],
+    "text/csv": [".csv"],
+};
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB, same limit as the frontend
 
 /** Error codes the frontend recognises (it turns UPLOAD_FAILED into its UploadError). */
 const UPLOAD_FAILED = "UPLOAD_FAILED";
 
 class UploadFailedError extends Error {}
 
+function getExtension(name) {
+    const dot = name?.lastIndexOf(".") ?? -1;
+    return dot >= 0 ? name.slice(dot).toLowerCase() : "";
+}
+
+/**
+ * Returns the MIME type to use for the file, or null if the file type isn't accepted.
+ * A known MIME type wins; otherwise it is looked up from the extension.
+ */
+function resolveMimeType(file) {
+    if (file.mimetype in ACCEPTED_FILE_TYPES) {
+        return file.mimetype;
+    }
+    const extension = getExtension(file.originalname);
+    const match = Object.entries(ACCEPTED_FILE_TYPES)
+        .find(([, extensions]) => extensions.includes(extension));
+    return match ? match[0] : null;
+}
+
 // Files are kept in memory only long enough to forward them to ENEO.
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: MAX_IMAGE_SIZE,
+        fileSize: MAX_FILE_SIZE,
         files: 1
     },
     fileFilter(req, file, cb) {
-        if (ACCEPTED_IMAGE_TYPES.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new UploadFailedError("Endast bilder (PNG, JPEG, GIF, WebP) kan bifogas."));
+        const mimeType = resolveMimeType(file);
+        if (!mimeType) {
+            return cb(new UploadFailedError(
+                "Endast bilder (PNG, JPEG, GIF, WebP), PDF och textfiler (TXT, MD, CSV) kan bifogas."
+            ));
         }
+        // Normalise so ENEO gets a proper type even if the browser sent a generic one.
+        file.mimetype = mimeType;
+        cb(null, true);
     }
 });
 
@@ -48,14 +85,14 @@ const upload = multer({
  * Parses an optional "file" field from multipart/form-data.
  * JSON requests pass straight through (multer ignores them), so old clients keep working.
  */
-function acceptOptionalImage(req, res, next) {
+function acceptOptionalFile(req, res, next) {
     upload.single("file")(req, res, (error) => {
         if (!error) {
             return next();
         }
 
         const message = error.code === "LIMIT_FILE_SIZE"
-            ? "Bilden är för stor (max 10 MB)."
+            ? "Filen är för stor (max 10 MB)."
             : error instanceof UploadFailedError
                 ? error.message
                 : "Kunde inte läsa den bifogade filen.";
@@ -68,7 +105,7 @@ function acceptOptionalImage(req, res, next) {
 }
 
 /**
- * Uploads the attached image (if any) to ENEO and returns the "files" array ENEO expects.
+ * Uploads the attached file (if any) to ENEO and returns the "files" array ENEO expects.
  * @returns {Promise<{id: string}[]>}
  */
 async function uploadAttachedFile(file) {
@@ -76,13 +113,17 @@ async function uploadAttachedFile(file) {
         return [];
     }
 
+    if (file.size === 0) {
+        throw new UploadFailedError("Filen är tom.");
+    }
+
     try {
         const fileId = await uploadFile(file);
-        console.log("Uppladdad fil till ENEO:", fileId);
+        console.log("Uppladdad fil till ENEO:", fileId, file.mimetype);
         return [{ id: fileId }];
     } catch (error) {
         console.error(error);
-        throw new UploadFailedError("Kunde inte ladda upp bilden.");
+        throw new UploadFailedError("Kunde inte ladda upp filen.");
     }
 }
 
@@ -140,14 +181,14 @@ router.get("/icon/:iconId", async (req, res) => {
     }
 });
 
-router.post("/session", acceptOptionalImage, async (req, res) => {
+router.post("/session", acceptOptionalFile, async (req, res) => {
 
     try {
 
         const message = req.body.message ?? "";
         const assistantId = req.body.assistant_id || null;
 
-        // A message may be image-only, but it needs text or an image.
+        // A message may be file-only, but it needs text or a file.
         if ((!message && !req.file) || !assistantId) {
             return res.status(400).json({
                 error: "Meddelande eller assistant ID saknas"
@@ -190,7 +231,7 @@ router.post("/session", acceptOptionalImage, async (req, res) => {
     }
 });
 
-router.post("/:sessionId/message", acceptOptionalImage, async (req, res) => {
+router.post("/:sessionId/message", acceptOptionalFile, async (req, res) => {
 
     try {
 

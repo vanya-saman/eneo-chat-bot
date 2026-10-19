@@ -28,7 +28,7 @@ async function uploadFile(file) {
     formData.append(
         "upload_file",
         new Blob([file.buffer], { type: file.mimetype }),
-        file.originalname || "image"
+        file.originalname || "upload"
     );
 
     // No Content-Type header: fetch sets multipart/form-data with the boundary itself.

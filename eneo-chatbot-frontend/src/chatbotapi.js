@@ -4,8 +4,9 @@ const assistantId = params.get("assistant_id") ?? null;
 const baseUrl = params.get("server") === "false" ? "http://localhost:3001/api/chat" : "/eneo-chat-bot/api/chat"
 
 import icon from "./assets/ai_icon.png"
+import {isImageFile} from "./fileUpload.js";
 
-/** Thrown when the backend reports that the image upload failed, so the UI can show a specific message. */
+/** Thrown when the backend reports that the file upload failed, so the UI can show a specific message. */
 export class UploadError extends Error {
     constructor(message) {
         super(message);
@@ -57,9 +58,9 @@ export async function getAssistantIcon(iconId) {
 }
 
 /**
- * Sends a message (and optionally an image) to the AI.
+ * Sends a message (and optionally a file: image, PDF or text) to the AI.
  * The first message creates a session; later messages reuse it.
- * The backend handles uploading the image to ENEO.
+ * The backend handles uploading the file to ENEO.
  *
  * @param {string} input
  * @param {File|null} file
@@ -120,27 +121,35 @@ async function postMessage(url, input, file) {
     return resp.json();
 }
 
+export function removeSession() {
+    sessionId = null;
+}
+
 
 export function createMessageObject(speaker, text, file) {
-    let url;
+    let url = null;
     if(file){
         // Separate URL from the input preview, so clearing the preview doesn't break the chat history.
         url = URL.createObjectURL(file);
     }
+    const isImage = isImageFile(file);
 
     const message = {
         id: generateRandomUUID(),
         speaker: speaker,
         text: text,
         time: parseTime(new Date()),
-        image: url ?? null
+        // Images are shown inline; other files (PDF, text) as a named link.
+        image: isImage ? url : null,
+        file: file && !isImage ? {name: file.name, url} : null
     };
 
     console.log("[Message] Created message", {
         id: message.id,
         speaker,
         textLength: text?.length,
-        hasImage: Boolean(url),
+        hasImage: Boolean(message.image),
+        hasFile: Boolean(message.file),
         time: message.time,
     });
 

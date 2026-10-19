@@ -9,7 +9,7 @@ import {
 } from './chatbotapi.js'
 import Message from "./components/Message.jsx";
 import icon from "./assets/ai_icon.png"
-import {ACCEPTED_IMAGE_TYPES, useFileUpload} from "./fileUpload.js";
+import {ACCEPT_ATTRIBUTE, useFileUpload} from "./fileUpload.js";
 
 function App() {
     const [aiIcon, setAiIcon] = useState(icon)
@@ -88,7 +88,7 @@ function App() {
             console.error("[Chat] Failed to get AI response:", error);
 
             const errorText = error instanceof UploadError
-                ? "Kunde inte ladda upp bilden. Försök igen."
+                ? "Kunde inte ladda upp filen. Försök igen."
                 : "Kunde inte hämta svar.";
 
             setMessages((messages) => [
@@ -173,18 +173,25 @@ function App() {
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                                accept={ACCEPT_ATTRIBUTE}
                                 onChange={handleFileInputChange}
                                 hidden
                             />
-                            {previewUrl && (
+                            {file && (
                                 <div className="attachment-preview">
-                                    <img className="embedded-image" src={previewUrl} alt={file?.name ?? "Bifogad bild"}/>
+                                    {previewUrl ? (
+                                        <img className="embedded-image" src={previewUrl} alt={file.name}/>
+                                    ) : (
+                                        <span className="file-chip" title={file.name}>
+                                            <span className="file-chip-icon" aria-hidden="true">📄</span>
+                                            <span className="file-chip-name">{file.name}</span>
+                                        </span>
+                                    )}
                                     <button
                                         type="button"
                                         className="remove-attachment"
                                         onClick={clearFile}
-                                        aria-label="Ta bort bild"
+                                        aria-label="Ta bort fil"
                                     >
                                         ×
                                     </button>
@@ -196,10 +203,8 @@ function App() {
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isLoading}
                             >
-                                Bifoga bild
+                                Bifoga fil
                             </button>
-
-
 
                             <button
                                 onClick={sendMessage}

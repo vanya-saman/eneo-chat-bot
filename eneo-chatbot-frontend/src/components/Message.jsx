@@ -27,8 +27,22 @@ function Message(props) {
                         className="message-image"
                         src={image}
                         alt="Message image"
+                        // The image has no height until it has loaded, so the scroll that
+                        // runs when the message is added stops short. Scroll again now.
                         onLoad={onImageLoad}
                     />
+                )}
+                {message.file && (
+                    <a
+                        className="file-chip message-file"
+                        href={message.file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={message.file.name}
+                    >
+                        <span className="file-chip-icon" aria-hidden="true">📄</span>
+                        <span className="file-chip-name">{message.file.name}</span>
+                    </a>
                 )}
                 <ReactMarkdown>
                     {message.text}
