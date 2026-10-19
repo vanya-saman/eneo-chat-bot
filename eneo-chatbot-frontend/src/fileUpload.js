@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useState} from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 
 /**
  * Accepted file types and their extensions.
@@ -17,7 +17,10 @@ export const ACCEPTED_FILE_TYPES = {
     "text/csv": [".csv"],
 };
 
-export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB per file
+
+/** Max number of files in one message. Keep in sync with MAX_FILES in the backend. */
+export const MAX_FILES = 5;
 
 /** Value for <input type="file" accept="...">. */
 export const ACCEPT_ATTRIBUTE = [
@@ -61,43 +64,89 @@ export function validateFile(file) {
     return null;
 }
 
+/** Same file picked twice (e.g. dropped again) — skip it instead of attaching a copy. */
+function isSameFile(a, b) {
+    return a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+}
+
+let nextAttachmentId = 0;
+
 /**
- * Hook that handles attaching one file via drag & drop, paste or a file picker.
+ * Hook that handles attaching up to MAX_FILES files via drag & drop, paste or a file picker.
+ *
+ * Each attachment is { id, file, previewUrl }. previewUrl is set for images only and is
+ * revoked when the attachment is removed, the list is cleared or the component unmounts.
  */
 export function useFileUpload() {
-    const [file, setFile] = useState(null);
-    const [previewUrl, setPreviewUrl] = useState(null);
+    const [attachments, setAttachments] = useState([]);
     const [error, setError] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
 
-    const selectFile = useCallback((candidate) => {
-        if (!candidate) {
+    // Always the latest list, so callbacks don't go stale and preview URLs are created once.
+    const attachmentsRef = useRef([]);
+
+    function updateAttachments(next) {
+        attachmentsRef.current = next;
+        setAttachments(next);
+    }
+
+    const addFiles = useCallback((fileList) => {
+        const candidates = Array.from(fileList ?? []);
+        if (candidates.length === 0) {
             return;
         }
-        const validationError = validateFile(candidate);
-        if (validationError) {
-            setError(validationError);
-            return;
+
+        const current = attachmentsRef.current;
+        const added = [];
+        const problems = [];
+
+        for (const file of candidates) {
+            if ([...current, ...added].some(a => isSameFile(a.file, file))) {
+                continue;
+            }
+            if (current.length + added.length >= MAX_FILES) {
+                problems.push(`Du kan bifoga högst ${MAX_FILES} filer per meddelande.`);
+                break;
+            }
+            const validationError = validateFile(file);
+            if (validationError) {
+                problems.push(`${file.name}: ${validationError}`);
+                continue;
+            }
+            added.push({
+                id: ++nextAttachmentId,
+                file,
+                previewUrl: isImageFile(file) ? URL.createObjectURL(file) : null
+            });
         }
-        setError(null);
-        setFile(candidate);
+
+        setError(problems.length > 0 ? problems.join(" ") : null);
+
+        if (added.length > 0) {
+            updateAttachments([...current, ...added]);
+        }
     }, []);
 
-    const clearFile = useCallback(() => {
-        setFile(null);
+    const removeFile = useCallback((id) => {
+        const current = attachmentsRef.current;
+        const removed = current.find(a => a.id === id);
+        if (removed?.previewUrl) {
+            URL.revokeObjectURL(removed.previewUrl);
+        }
+        updateAttachments(current.filter(a => a.id !== id));
         setError(null);
     }, []);
 
-    // Thumbnail URL for images only; other files are shown by name.
-    useEffect(() => {
-        if (!file || !isImageFile(file)) {
-            setPreviewUrl(null);
-            return;
-        }
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        return () => URL.revokeObjectURL(url);
-    }, [file]);
+    const clearFiles = useCallback(() => {
+        attachmentsRef.current.forEach(a => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+        updateAttachments([]);
+        setError(null);
+    }, []);
+
+    // Release any remaining preview URLs on unmount.
+    useEffect(() => () => {
+        attachmentsRef.current.forEach(a => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+    }, []);
 
     useEffect(() => {
         let dragDepth = 0;
@@ -132,15 +181,15 @@ export function useFileUpload() {
             e.preventDefault();
             dragDepth = 0;
             setIsDragging(false);
-            selectFile(e.dataTransfer.files[0]);
+            addFiles(e.dataTransfer.files);
         }
 
-        // Pasting a screenshot or a copied file. Plain text pastes are left alone.
+        // Pasting screenshots or copied files. Plain text pastes are left alone.
         function handlePaste(e) {
-            const pasted = e.clipboardData?.files?.[0];
-            if (pasted) {
+            const pasted = e.clipboardData?.files;
+            if (pasted && pasted.length > 0) {
                 e.preventDefault();
-                selectFile(pasted);
+                addFiles(pasted);
             }
         }
 
@@ -157,14 +206,16 @@ export function useFileUpload() {
             document.removeEventListener("drop", handleDrop);
             document.removeEventListener("paste", handlePaste);
         };
-    }, [selectFile]);
+    }, [addFiles]);
 
     return {
-        file,
-        previewUrl,
+        attachments,
+        files: attachments.map(a => a.file),
+        canAddMore: attachments.length < MAX_FILES,
         error,
         isDragging,
-        selectFile,
-        clearFile
+        addFiles,
+        removeFile,
+        clearFiles
     };
 }

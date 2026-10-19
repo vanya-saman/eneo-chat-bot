@@ -120,7 +120,7 @@ async function sendMessage(input, proxySessionId, assistantId, files = []) {
 
     let fileId;
     if(files.length > 0) {
-        fileId = [files[0].id];
+        fileId = files.map(file => file.id);
     } else {
         fileId = []
     }

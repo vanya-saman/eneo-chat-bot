@@ -58,15 +58,15 @@ export async function getAssistantIcon(iconId) {
 }
 
 /**
- * Sends a message (and optionally a file: image, PDF or text) to the AI.
+ * Sends a message (and optionally up to 5 files: images, PDF or text) to the AI.
  * The first message creates a session; later messages reuse it.
- * The backend handles uploading the file to ENEO.
+ * The backend handles uploading the files to ENEO.
  *
  * @param {string} input
- * @param {File|null} file
+ * @param {File[]} files
  * @returns {Promise<string>} the AI's answer
  */
-export async function getMessageFromAi(input, file = null) {
+export async function getMessageFromAi(input, files = []) {
     if(!assistantId){
         throw Error("No assistant id for AI.")
     }
@@ -74,30 +74,31 @@ export async function getMessageFromAi(input, file = null) {
     console.log("[API] getMessageFromAi called", {
         hasSession: Boolean(sessionId),
         inputLength: input?.length,
-        hasFile: Boolean(file),
+        fileCount: files.length,
     });
 
     if (!sessionId) {
-        const data = await postMessage(`${baseUrl}/session`, input, file);
+        const data = await postMessage(`${baseUrl}/session`, input, files);
         sessionId = data.sessionId;
         console.log("[API] New session created", {sessionId});
         return data.response;
     }
 
-    const data = await postMessage(`${baseUrl}/${sessionId}/message/`, input, file);
+    const data = await postMessage(`${baseUrl}/${sessionId}/message/`, input, files);
     return data.response;
 }
 
 /**
- * Posts the message as multipart/form-data so the image can travel in the same request.
+ * Posts the message as multipart/form-data so the files can travel in the same request.
+ * Each file is appended under the same field name ("files"), which the backend reads as a list.
  * Content-Type is not set manually: the browser adds it together with the multipart boundary.
  */
-async function postMessage(url, input, file) {
+async function postMessage(url, input, files) {
     const formData = new FormData();
     formData.append("message", input ?? "");
     formData.append("assistant_id", assistantId);
-    if (file) {
-        formData.append("file", file);
+    for (const file of files) {
+        formData.append("files", file);
     }
 
     const resp = await fetch(url, {
@@ -126,30 +127,30 @@ export function removeSession() {
 }
 
 
-export function createMessageObject(speaker, text, file) {
-    let url = null;
-    if(file){
-        // Separate URL from the input preview, so clearing the preview doesn't break the chat history.
-        url = URL.createObjectURL(file);
-    }
-    const isImage = isImageFile(file);
+/**
+ * @param {"ai"|"user"} speaker
+ * @param {string} text
+ * @param {File[]} files - attachments; images are shown inline, other files (PDF, text) as named links
+ */
+export function createMessageObject(speaker, text, files = []) {
+    // Separate URLs from the input previews, so clearing the previews doesn't break the chat history.
+    const toAttachment = (file) => ({name: file.name, url: URL.createObjectURL(file)});
 
     const message = {
         id: generateRandomUUID(),
         speaker: speaker,
         text: text,
         time: parseTime(new Date()),
-        // Images are shown inline; other files (PDF, text) as a named link.
-        image: isImage ? url : null,
-        file: file && !isImage ? {name: file.name, url} : null
+        images: files.filter(isImageFile).map(toAttachment),
+        files: files.filter(file => !isImageFile(file)).map(toAttachment)
     };
 
     console.log("[Message] Created message", {
         id: message.id,
         speaker,
         textLength: text?.length,
-        hasImage: Boolean(message.image),
-        hasFile: Boolean(message.file),
+        imageCount: message.images.length,
+        fileCount: message.files.length,
         time: message.time,
     });
 

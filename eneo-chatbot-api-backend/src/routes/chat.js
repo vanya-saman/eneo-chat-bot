@@ -35,7 +35,8 @@ const ACCEPTED_FILE_TYPES = {
     "text/markdown": [".md"],
     "text/csv": [".csv"],
 };
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB, same limit as the frontend
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB per file, same limit as the frontend
+const MAX_FILES = 5; // files per message, same limit as the frontend
 
 /** Error codes the frontend recognises (it turns UPLOAD_FAILED into its UploadError). */
 const UPLOAD_FAILED = "UPLOAD_FAILED";
@@ -66,7 +67,7 @@ const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
         fileSize: MAX_FILE_SIZE,
-        files: 1
+        files: MAX_FILES
     },
     fileFilter(req, file, cb) {
         const mimeType = resolveMimeType(file);
@@ -82,20 +83,25 @@ const upload = multer({
 });
 
 /**
- * Parses an optional "file" field from multipart/form-data.
+ * Parses up to MAX_FILES files from the "files" field of multipart/form-data into req.files.
  * JSON requests pass straight through (multer ignores them), so old clients keep working.
  */
-function acceptOptionalFile(req, res, next) {
-    upload.single("file")(req, res, (error) => {
+function acceptOptionalFiles(req, res, next) {
+    upload.array("files", MAX_FILES)(req, res, (error) => {
         if (!error) {
             return next();
         }
 
-        const message = error.code === "LIMIT_FILE_SIZE"
-            ? "Filen är för stor (max 10 MB)."
-            : error instanceof UploadFailedError
-                ? error.message
-                : "Kunde inte läsa den bifogade filen.";
+        let message;
+        if (error.code === "LIMIT_FILE_SIZE") {
+            message = `En av filerna är för stor (max ${MAX_FILE_SIZE / 1024 / 1024} MB per fil).`;
+        } else if (error.code === "LIMIT_FILE_COUNT" || error.code === "LIMIT_UNEXPECTED_FILE") {
+            message = `Du kan bifoga högst ${MAX_FILES} filer per meddelande.`;
+        } else if (error instanceof UploadFailedError) {
+            message = error.message;
+        } else {
+            message = "Kunde inte läsa de bifogade filerna.";
+        }
 
         return res.status(400).json({
             error: message,
@@ -105,25 +111,29 @@ function acceptOptionalFile(req, res, next) {
 }
 
 /**
- * Uploads the attached file (if any) to ENEO and returns the "files" array ENEO expects.
+ * Uploads the attached files (if any) to ENEO in parallel and returns the "files" array ENEO expects.
+ * If any upload fails, the whole message fails, so the AI never answers with files missing.
+ * @param {object[]} files - multer file objects (req.files)
  * @returns {Promise<{id: string}[]>}
  */
-async function uploadAttachedFile(file) {
-    if (!file) {
+async function uploadAttachedFiles(files = []) {
+    if (files.length === 0) {
         return [];
     }
 
-    if (file.size === 0) {
-        throw new UploadFailedError("Filen är tom.");
+    if (files.some(file => file.size === 0)) {
+        throw new UploadFailedError("En av filerna är tom.");
     }
 
     try {
-        const fileId = await uploadFile(file);
-        console.log("Uppladdad fil till ENEO:", fileId, file.mimetype);
-        return [{ id: fileId }];
+        const fileIds = await Promise.all(files.map(file => uploadFile(file)));
+        console.log("Uppladdade filer till ENEO:", fileIds);
+        return fileIds.map(id => ({ id }));
     } catch (error) {
         console.error(error);
-        throw new UploadFailedError("Kunde inte ladda upp filen.");
+        throw new UploadFailedError(
+            files.length > 1 ? "Kunde inte ladda upp filerna." : "Kunde inte ladda upp filen."
+        );
     }
 }
 
@@ -181,21 +191,21 @@ router.get("/icon/:iconId", async (req, res) => {
     }
 });
 
-router.post("/session", acceptOptionalFile, async (req, res) => {
+router.post("/session", acceptOptionalFiles, async (req, res) => {
 
     try {
 
         const message = req.body.message ?? "";
         const assistantId = req.body.assistant_id || null;
 
-        // A message may be file-only, but it needs text or a file.
-        if ((!message && !req.file) || !assistantId) {
+        // A message may be files only, but it needs text or at least one file.
+        if ((!message && !req.files?.length) || !assistantId) {
             return res.status(400).json({
                 error: "Meddelande eller assistant ID saknas"
             });
         }
 
-        const files = await uploadAttachedFile(req.file);
+        const files = await uploadAttachedFiles(req.files);
 
         // Första meddelandet skapar samtidigt ENEO-sessionen
         const eneoResponse = await createSession(message, assistantId, files);
@@ -231,7 +241,7 @@ router.post("/session", acceptOptionalFile, async (req, res) => {
     }
 });
 
-router.post("/:sessionId/message", acceptOptionalFile, async (req, res) => {
+router.post("/:sessionId/message", acceptOptionalFiles, async (req, res) => {
 
     try {
 
@@ -239,20 +249,20 @@ router.post("/:sessionId/message", acceptOptionalFile, async (req, res) => {
         const message = req.body.message ?? "";
         const assistantId = req.body.assistant_id || null;
 
-        if ((!message && !req.file) || !assistantId) {
+        if ((!message && !req.files?.length) || !assistantId) {
             return res.status(400).json({
                 error: "Meddelande eller assistant ID saknas"
             });
         }
 
-        // Check the session before uploading, so no file is uploaded for a dead session.
+        // Check the session before uploading, so no files are uploaded for a dead session.
         if (!getSession(sessionId)) {
             return res.status(404).json({
                 error: "Chat-session hittades inte"
             });
         }
 
-        const files = await uploadAttachedFile(req.file);
+        const files = await uploadAttachedFiles(req.files);
 
         const eneoResponse = await sendMessage(
             message,

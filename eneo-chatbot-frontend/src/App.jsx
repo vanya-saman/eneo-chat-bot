@@ -9,7 +9,7 @@ import {
 } from './chatbotapi.js'
 import Message from "./components/Message.jsx";
 import icon from "./assets/ai_icon.png"
-import {ACCEPT_ATTRIBUTE, useFileUpload} from "./fileUpload.js";
+import {ACCEPT_ATTRIBUTE, MAX_FILES, useFileUpload} from "./fileUpload.js";
 
 function App() {
     const [aiIcon, setAiIcon] = useState(icon)
@@ -21,12 +21,14 @@ function App() {
     const [isLoading, setIsLoading] = useState(false);
 
     const {
-        file,
-        previewUrl,
+        attachments,
+        files,
+        canAddMore,
         error: uploadError,
         isDragging,
-        selectFile,
-        clearFile
+        addFiles,
+        removeFile,
+        clearFiles
     } = useFileUpload();
     const fileInputRef = useRef(null);
 
@@ -45,11 +47,11 @@ function App() {
                 })
             }
             const greeting = data.greeting;
-            setMessages((messages) => [...messages, createMessageObject("ai", greeting, null)]);
+            setMessages((messages) => [...messages, createMessageObject("ai", greeting)]);
         }).catch(error => {
             console.log(error);
             setAiName("Chatbot")
-            setMessages((messages) => [...messages, createMessageObject("ai", "Kunde inte kontakta AI. Testa att ladda om sidan.", null)])
+            setMessages((messages) => [...messages, createMessageObject("ai", "Kunde inte kontakta AI. Testa att ladda om sidan.")])
         });
     }
 
@@ -57,12 +59,12 @@ function App() {
 
     async function sendMessage() {
         const text = input.trim();
-        const attachedFile = file;
+        const attachedFiles = files;
 
-        if ((!text && !attachedFile) || isLoading) {
+        if ((!text && attachedFiles.length === 0) || isLoading) {
             console.log("[Chat] Message not sent:", {
                 hasText: Boolean(text),
-                hasFile: Boolean(attachedFile),
+                fileCount: attachedFiles.length,
                 isLoading
             });
             return;
@@ -70,17 +72,17 @@ function App() {
 
         console.log("[Chat] Sending message:", text);
 
-        const userMessage = createMessageObject("user", text, attachedFile);
+        const userMessage = createMessageObject("user", text, attachedFiles);
 
         setMessages((messages) => [...messages, userMessage]);
         setInput("");
-        clearFile();
+        clearFiles();
         setIsLoading(true);
 
         try {
-            const aiResponse = await getMessageFromAi(text, attachedFile);
+            const aiResponse = await getMessageFromAi(text, attachedFiles);
 
-            const aiMessage = createMessageObject("ai", aiResponse, null);
+            const aiMessage = createMessageObject("ai", aiResponse);
             setMessages((messages) => [...messages, aiMessage]);
             console.log("[Chat] AI response received:", aiResponse);
 
@@ -88,12 +90,14 @@ function App() {
             console.error("[Chat] Failed to get AI response:", error);
 
             const errorText = error instanceof UploadError
-                ? "Kunde inte ladda upp filen. Försök igen."
+                ? (attachedFiles.length > 1
+                    ? "Kunde inte ladda upp filerna. Försök igen."
+                    : "Kunde inte ladda upp filen. Försök igen.")
                 : "Kunde inte hämta svar.";
 
             setMessages((messages) => [
                 ...messages,
-                createMessageObject("ai", errorText, null),
+                createMessageObject("ai", errorText),
             ]);
         } finally {
             setIsLoading(false);
@@ -108,7 +112,7 @@ function App() {
     }
 
     function handleFileInputChange(event) {
-        selectFile(event.target.files?.[0]);
+        addFiles(event.target.files);
         // Reset so picking the same file again still fires onChange.
         event.target.value = "";
     }
@@ -139,7 +143,6 @@ function App() {
                             message={message}
                             aiIcon={aiIcon}
                             aiName={aiName}
-                            image={message.image}
                             onImageLoad={scrollToBottom}
                         />
                     ))}
@@ -164,6 +167,31 @@ function App() {
                         onKeyDown={handleKeyDown}
                     />
 
+                    {attachments.length > 0 && (
+                        <div className="attachment-list">
+                            {attachments.map(({id, file, previewUrl}) => (
+                                <div className="attachment-preview" key={id}>
+                                    {previewUrl ? (
+                                        <img className="embedded-image" src={previewUrl} alt={file.name} title={file.name}/>
+                                    ) : (
+                                        <span className="file-chip" title={file.name}>
+                                            <span className="file-chip-icon" aria-hidden="true">📄</span>
+                                            <span className="file-chip-name">{file.name}</span>
+                                        </span>
+                                    )}
+                                    <button
+                                        type="button"
+                                        className="remove-attachment"
+                                        onClick={() => removeFile(id)}
+                                        aria-label={`Ta bort ${file.name}`}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
                     {uploadError && (
                         <p className="upload-error" role="alert">{uploadError}</p>
                     )}
@@ -175,40 +203,27 @@ function App() {
                                 type="file"
                                 accept={ACCEPT_ATTRIBUTE}
                                 onChange={handleFileInputChange}
+                                multiple
                                 hidden
                             />
-                            {file && (
-                                <div className="attachment-preview">
-                                    {previewUrl ? (
-                                        <img className="embedded-image" src={previewUrl} alt={file.name}/>
-                                    ) : (
-                                        <span className="file-chip" title={file.name}>
-                                            <span className="file-chip-icon" aria-hidden="true">📄</span>
-                                            <span className="file-chip-name">{file.name}</span>
-                                        </span>
-                                    )}
-                                    <button
-                                        type="button"
-                                        className="remove-attachment"
-                                        onClick={clearFile}
-                                        aria-label="Ta bort fil"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
+                            {attachments.length > 0 && (
+                                <span className="attachment-count">
+                                    {attachments.length}/{MAX_FILES} filer
+                                </span>
                             )}
                             <button
                                 type="button"
                                 className="attach-button"
                                 onClick={() => fileInputRef.current?.click()}
-                                disabled={isLoading}
+                                disabled={isLoading || !canAddMore}
+                                title={canAddMore ? undefined : `Högst ${MAX_FILES} filer per meddelande`}
                             >
                                 Bifoga fil
                             </button>
 
                             <button
                                 onClick={sendMessage}
-                                disabled={(!input.trim() && !file) || isLoading}
+                                disabled={(!input.trim() && files.length === 0) || isLoading}
                             >
                                 Skicka
                             </button>
