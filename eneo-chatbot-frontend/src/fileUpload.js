@@ -1,4 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from "react";
+import {compressImage} from "./imageCompression.js";
 
 /**
  * Accepted file types and their extensions.
@@ -17,7 +18,15 @@ export const ACCEPTED_FILE_TYPES = {
     "text/csv": [".csv"],
 };
 
-export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB per file
+/** Max size per file as sent (i.e. after image compression). Keep in sync with the backend. */
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+/**
+ * Max size of an image before compression. Larger photos are allowed in, because
+ * compression usually brings them well under MAX_FILE_SIZE; this only stops the
+ * browser from trying to decode enormous files.
+ */
+export const MAX_RAW_IMAGE_SIZE = 50 * 1024 * 1024; // 50 MB
 
 /** Max number of files in one message. Keep in sync with MAX_FILES in the backend. */
 export const MAX_FILES = 5;
@@ -44,7 +53,10 @@ export function isImageFile(file) {
     return Boolean(file?.type?.startsWith("image/")) && file.type in ACCEPTED_FILE_TYPES;
 }
 
+const MAX_MB = (bytes) => bytes / 1024 / 1024;
+
 /**
+ * Checks a file as the user picked it (before compression).
  * Returns an error message (in Swedish, shown to the user) or null if the file is OK.
  * @param {File} file
  */
@@ -58,8 +70,9 @@ export function validateFile(file) {
     if (file.size === 0) {
         return "Filen är tom.";
     }
-    if (file.size > MAX_FILE_SIZE) {
-        return `Filen är för stor (max ${MAX_FILE_SIZE / 1024 / 1024} MB).`;
+    const limit = isImageFile(file) ? MAX_RAW_IMAGE_SIZE : MAX_FILE_SIZE;
+    if (file.size > limit) {
+        return `Filen är för stor (max ${MAX_MB(limit)} MB).`;
     }
     return null;
 }
@@ -73,22 +86,67 @@ let nextAttachmentId = 0;
 
 /**
  * Hook that handles attaching up to MAX_FILES files via drag & drop, paste or a file picker.
+ * Images are compressed to WebP as they are added (see imageCompression.js).
  *
- * Each attachment is { id, file, previewUrl }. previewUrl is set for images only and is
- * revoked when the attachment is removed, the list is cleared or the component unmounts.
+ * Each attachment is { id, file, original, previewUrl }:
+ * - file: what gets shown and sent (the compressed image, or the original for other files)
+ * - original: the file as picked, used to detect duplicates
+ * - previewUrl: set for images only; revoked when the attachment is removed, the list is
+ *   cleared or the component unmounts.
  */
 export function useFileUpload() {
     const [attachments, setAttachments] = useState([]);
     const [error, setError] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [processingCount, setProcessingCount] = useState(0);
 
-    // Always the latest list, so callbacks don't go stale and preview URLs are created once.
+    // Always the latest list, so callbacks don't go stale.
     const attachmentsRef = useRef([]);
+    // Adds run one after another, so the MAX_FILES count stays correct while images compress.
+    const queueRef = useRef(Promise.resolve());
 
     function updateAttachments(next) {
         attachmentsRef.current = next;
         setAttachments(next);
     }
+
+    const processFiles = useCallback(async (candidates) => {
+        const problems = [];
+
+        for (const original of candidates) {
+            const current = attachmentsRef.current;
+
+            if (current.some(a => isSameFile(a.original, original))) {
+                continue;
+            }
+            if (current.length >= MAX_FILES) {
+                problems.push(`Du kan bifoga högst ${MAX_FILES} filer per meddelande.`);
+                break;
+            }
+            const validationError = validateFile(original);
+            if (validationError) {
+                problems.push(`${original.name}: ${validationError}`);
+                continue;
+            }
+
+            const file = isImageFile(original) ? await compressImage(original) : original;
+
+            if (file.size > MAX_FILE_SIZE) {
+                problems.push(`${original.name}: Filen är för stor (max ${MAX_MB(MAX_FILE_SIZE)} MB).`);
+                continue;
+            }
+
+            // Show each file as soon as it's ready instead of waiting for the whole batch.
+            updateAttachments([...attachmentsRef.current, {
+                id: ++nextAttachmentId,
+                file,
+                original,
+                previewUrl: isImageFile(file) ? URL.createObjectURL(file) : null
+            }]);
+        }
+
+        setError(problems.length > 0 ? problems.join(" ") : null);
+    }, []);
 
     const addFiles = useCallback((fileList) => {
         const candidates = Array.from(fileList ?? []);
@@ -96,36 +154,12 @@ export function useFileUpload() {
             return;
         }
 
-        const current = attachmentsRef.current;
-        const added = [];
-        const problems = [];
-
-        for (const file of candidates) {
-            if ([...current, ...added].some(a => isSameFile(a.file, file))) {
-                continue;
-            }
-            if (current.length + added.length >= MAX_FILES) {
-                problems.push(`Du kan bifoga högst ${MAX_FILES} filer per meddelande.`);
-                break;
-            }
-            const validationError = validateFile(file);
-            if (validationError) {
-                problems.push(`${file.name}: ${validationError}`);
-                continue;
-            }
-            added.push({
-                id: ++nextAttachmentId,
-                file,
-                previewUrl: isImageFile(file) ? URL.createObjectURL(file) : null
-            });
-        }
-
-        setError(problems.length > 0 ? problems.join(" ") : null);
-
-        if (added.length > 0) {
-            updateAttachments([...current, ...added]);
-        }
-    }, []);
+        setProcessingCount(count => count + 1);
+        queueRef.current = queueRef.current
+            .then(() => processFiles(candidates))
+            .catch(err => console.error("[Upload] Failed to add files", err))
+            .finally(() => setProcessingCount(count => count - 1));
+    }, [processFiles]);
 
     const removeFile = useCallback((id) => {
         const current = attachmentsRef.current;
@@ -212,6 +246,7 @@ export function useFileUpload() {
         attachments,
         files: attachments.map(a => a.file),
         canAddMore: attachments.length < MAX_FILES,
+        isProcessing: processingCount > 0,
         error,
         isDragging,
         addFiles,

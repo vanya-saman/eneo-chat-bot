@@ -24,6 +24,7 @@ function App() {
         attachments,
         files,
         canAddMore,
+        isProcessing,
         error: uploadError,
         isDragging,
         addFiles,
@@ -61,11 +62,13 @@ function App() {
         const text = input.trim();
         const attachedFiles = files;
 
-        if ((!text && attachedFiles.length === 0) || isLoading) {
+        // Wait for images to finish compressing, so none are left out of the message.
+        if ((!text && attachedFiles.length === 0) || isLoading || isProcessing) {
             console.log("[Chat] Message not sent:", {
                 hasText: Boolean(text),
                 fileCount: attachedFiles.length,
-                isLoading
+                isLoading,
+                isProcessing
             });
             return;
         }
@@ -206,7 +209,11 @@ function App() {
                                 multiple
                                 hidden
                             />
-                            {attachments.length > 0 && (
+                            {isProcessing ? (
+                                <span className="attachment-count" role="status">
+                                    Förbereder bild…
+                                </span>
+                            ) : attachments.length > 0 && (
                                 <span className="attachment-count">
                                     {attachments.length}/{MAX_FILES} filer
                                 </span>
@@ -223,7 +230,7 @@ function App() {
 
                             <button
                                 onClick={sendMessage}
-                                disabled={(!input.trim() && files.length === 0) || isLoading}
+                                disabled={(!input.trim() && files.length === 0) || isLoading || isProcessing}
                             >
                                 Skicka
                             </button>
