@@ -1,5 +1,5 @@
 import {useCallback, useEffect, useRef, useState} from "react";
-import {compressImage} from "./imageCompression.js";
+import {compressImage} from "../imageCompression.js";
 
 /**
  * Accepted file types and their extensions.

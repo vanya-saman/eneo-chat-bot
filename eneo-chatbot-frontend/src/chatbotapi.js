@@ -4,7 +4,7 @@ const assistantId = params.get("assistant_id") ?? null;
 const baseUrl = params.get("server") === "false" ? "http://localhost:3001/api/chat" : "/eneo-chat-bot/api/chat"
 
 import icon from "./assets/ai_icon.png"
-import {isImageFile} from "./fileUpload.js";
+import {isImageFile} from "./hooks/useFileUpload.js";
 
 /** Thrown when the backend reports that the file upload failed, so the UI can show a specific message. */
 export class UploadError extends Error {
@@ -67,25 +67,22 @@ export async function getAssistantIcon(iconId) {
  * @returns {Promise<string>} the AI's answer
  */
 export async function getMessageFromAi(input, files = []) {
-    if(!assistantId){
+    if (!assistantId) {
         throw Error("No assistant id for AI.")
     }
 
-    console.log("[API] getMessageFromAi called", {
-        hasSession: Boolean(sessionId),
-        inputLength: input?.length,
-        fileCount: files.length,
-    });
-
+    let data;
     if (!sessionId) {
-        const data = await postMessage(`${baseUrl}/session`, input, files);
+        data = await postMessage(`${baseUrl}/session`, input, files);
         sessionId = data.sessionId;
-        console.log("[API] New session created", {sessionId});
-        return data.response;
+    } else {
+        data = await postMessage(`${baseUrl}/${sessionId}/message/`, input, files);
     }
 
-    const data = await postMessage(`${baseUrl}/${sessionId}/message/`, input, files);
-    return data.response;
+    return {
+        text: data.response,
+        references: data.references ?? []
+    };
 }
 
 /**
@@ -131,8 +128,9 @@ export function removeSession() {
  * @param {"ai"|"user"} speaker
  * @param {string} text
  * @param {File[]} files - attachments; images are shown inline, other files (PDF, text) as named links
+ * @param references - Sources used by the AI for its response
  */
-export function createMessageObject(speaker, text, files = []) {
+export function createMessageObject(speaker, text, files = [], references = []) {
     // Separate URLs from the input previews, so clearing the previews doesn't break the chat history.
     const toAttachment = (file) => ({name: file.name, url: URL.createObjectURL(file)});
 
@@ -142,7 +140,8 @@ export function createMessageObject(speaker, text, files = []) {
         text: text,
         time: parseTime(new Date()),
         images: files.filter(isImageFile).map(toAttachment),
-        files: files.filter(file => !isImageFile(file)).map(toAttachment)
+        files: files.filter(file => !isImageFile(file)).map(toAttachment),
+        references: references
     };
 
     console.log("[Message] Created message", {
@@ -152,6 +151,7 @@ export function createMessageObject(speaker, text, files = []) {
         imageCount: message.images.length,
         fileCount: message.files.length,
         time: message.time,
+        references: references
     });
 
     return message;

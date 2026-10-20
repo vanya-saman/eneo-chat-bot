@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import CopyButton from "./CopyButton.jsx";
+import Sources from "./Sources.jsx";
 
 
 function Message(props) {
@@ -69,7 +70,7 @@ function Message(props) {
                 <ReactMarkdown>
                     {message.text}
                 </ReactMarkdown>
-
+                <Sources references={message.references}/>
                 <div className="message-footer-container">
                     {message.speaker === "ai" && (
                         <CopyButton text={message.text}/>

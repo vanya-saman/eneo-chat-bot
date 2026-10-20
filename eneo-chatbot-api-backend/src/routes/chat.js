@@ -14,6 +14,9 @@ const {
     createSession: storeSession,
     getSession
 } = require("../sessions/sessionStore");
+const {removeRefs, getInrefContents} = require("../utils/referencesParser");
+
+
 
 const router = express.Router();
 
@@ -21,7 +24,7 @@ const router = express.Router();
 // ---------- File upload handling ----------
 
 /**
- * Accepted file types and their extensions. Keep in sync with the frontend (fileUpload.js).
+ * Accepted file types and their extensions. Keep in sync with the frontend (useFileUpload.js).
  * Extensions are checked too, because browsers often send .md/.csv files with an empty
  * or generic MIME type (e.g. application/octet-stream).
  */
@@ -272,7 +275,8 @@ router.post("/:sessionId/message", acceptOptionalFiles, async (req, res) => {
         );
 
         return res.json({
-            response: eneoResponse.answer
+            response: removeRefs(eneoResponse.answer),
+            references: getInrefContents(eneoResponse.answer, eneoResponse.mcp_tool_references)
         });
 
     } catch (error) {
