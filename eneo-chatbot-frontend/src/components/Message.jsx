@@ -2,6 +2,10 @@ import ReactMarkdown from "react-markdown";
 import CopyButton from "./CopyButton.jsx";
 import Sources from "./Sources.jsx";
 
+/**
+ * A single chat message: text as Markdown, attached images and files, and sources.
+ * AI messages also show the assistant's icon, name and a copy button.
+ */
 
 function Message(props) {
     const message = props.message;

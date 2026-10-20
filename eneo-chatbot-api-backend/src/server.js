@@ -1,3 +1,4 @@
+/** Entry point for the backend: an Express proxy between the chat frontend and the ENEO API. */
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -9,6 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+/** Health check, returns { status: "OK" } when the server is up. */
 app.get("/health", (req, res) => {
     res.json({
         status: "OK"

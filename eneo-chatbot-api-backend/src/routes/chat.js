@@ -13,7 +13,7 @@ const {
 const {
     createSession: storeSession,
     getSession
-} = require("../sessions/sessionStore");
+} = require("../sessions/sessionStorage");
 const {removeRefs, getInrefContents} = require("../utils/referencesParser");
 
 
@@ -210,22 +210,22 @@ router.post("/session", acceptOptionalFiles, async (req, res) => {
 
         const files = await uploadAttachedFiles(req.files);
 
-        // Första meddelandet skapar samtidigt ENEO-sessionen
+        // First message creates the ENEO-session
         const eneoResponse = await createSession(message, assistantId, files);
 
 
         const eneoSessionId = eneoResponse.session_id;
 
-        // Vårt eget ID som frontend får känna till
+        // Proxy session ID exposed to the frontend, mapped to the real ENEO session id
         const proxySessionId = "raccoon-" + generateRandomUUID();
 
-        // Spara kopplingen
+        // Save session
         storeSession(
             proxySessionId,
             eneoSessionId
         );
 
-        // Returnera INTE ENEO-ID:t
+
         return res.json({
             sessionId: proxySessionId,
             response: removeRefs(eneoResponse.answer),

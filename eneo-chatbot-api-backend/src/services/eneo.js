@@ -1,4 +1,4 @@
-const { getSession } = require("../sessions/sessionStore");
+const { getSession } = require("../sessions/sessionStorage");
 
 const apiKey = process.env.API_KEY;
 

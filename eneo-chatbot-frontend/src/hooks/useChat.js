@@ -2,6 +2,12 @@ import icon from "../assets/ai_icon.png";
 import {useEffect, useRef, useState} from 'react'
 import {createMessageObject, fetchAssistant, getAssistantIcon, getMessageFromAi, UploadError} from "../chatbotapi.js";
 
+/**
+ * Chat state and logic: loads the assistant's greeting, name and icon,
+ * sends messages with attachments and keeps the message list scrolled to the bottom.
+ * Takes clearFiles, isProcessing, files and addFiles from useFileUpload.
+ */
+
 export function useChat(clearFiles, isProcessing, files, addFiles){
 
     const [aiIcon, setAiIcon] = useState(icon)

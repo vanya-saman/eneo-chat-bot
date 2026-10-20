@@ -1,11 +1,14 @@
 import {useRef} from 'react'
 import './App.css'
 import Message from "./components/Message.jsx";
-import {ACCEPT_ATTRIBUTE, MAX_FILES, useFileUpload} from "./hooks/useFileUpload.js";
+import {useFileUpload} from "./hooks/useFileUpload.js";
 import {useChat} from "./hooks/useChat.js";
 import MessagesField from "./components/MessagesField.jsx";
 import InputActions from "./components/InputActions.jsx";
 import Attachments from "./components/Attachments.jsx";
+
+/** Root component: the chat window with the message list, text input, attachments and actions. */
+
 
 function App() {
 
@@ -84,15 +87,16 @@ function App() {
 
                     <InputActions
                         ref={fileInputRef}
-                        onChange={handleFileInputChange}
+                        onFileChange={handleFileInputChange}
                         processing={isProcessing}
                         attachments={attachments}
-                        onClick={() => fileInputRef.current?.click()}
+                        onAttachClick={() => fileInputRef.current?.click()}
                         loading={isLoading}
                         canAddMore={canAddMore}
-                        onClick1={sendMessage}
+                        onSend={sendMessage}
                         input={input}
-                        files={files}/>
+                        files={files}
+                    />
                 </div>
             </section>
         </main>

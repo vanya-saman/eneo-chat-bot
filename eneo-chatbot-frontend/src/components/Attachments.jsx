@@ -1,6 +1,10 @@
-function Attachments({attachments, removeFile}){
-
-
+/**
+ * Shows the files attached to the message being written, each with a remove button.
+ * Images get a thumbnail, other files a chip with the file name.
+ * @param {{id: number, file: File, previewUrl: string|null}[]} attachments
+ * @param {(id: number) => void} removeFile
+ */
+function Attachments({attachments, removeFile}) {
     return (
         <div className="attachment-list">
             {attachments.map(({id, file, previewUrl}) => (
@@ -10,9 +14,9 @@ function Attachments({attachments, removeFile}){
                              title={file.name}/>
                     ) : (
                         <span className="file-chip" title={file.name}>
-                                            <span className="file-chip-icon" aria-hidden="true">📄</span>
-                                            <span className="file-chip-name">{file.name}</span>
-                                        </span>
+                            <span className="file-chip-icon" aria-hidden="true">📄</span>
+                            <span className="file-chip-name">{file.name}</span>
+                        </span>
                     )}
                     <button
                         type="button"
@@ -26,8 +30,6 @@ function Attachments({attachments, removeFile}){
             ))}
         </div>
     );
-
-
 }
 
 export default Attachments;

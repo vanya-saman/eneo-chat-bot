@@ -1,11 +1,12 @@
 import {useState} from "react";
 
+/** Collapsible list of the sources the AI used for its answer. Renders nothing if there are no sources. */
 export default function Sources({ references }) {
+    const [isVisible, setIsVisible] = useState(false)
+
     if (!references || references.length === 0) {
         return null;
     }
-
-    const [isVisible, setIsVisible] = useState(false)
 
     return (
         <div className="sources">
@@ -18,7 +19,6 @@ export default function Sources({ references }) {
                     </details>
                 ))}
             </div>
-
         </div>
     );
 }

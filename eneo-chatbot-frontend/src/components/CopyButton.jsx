@@ -1,3 +1,10 @@
+import {useState, useEffect} from "react";
+import './CopyButton.css';
+import copyIcon from "../assets/copy_button.png"
+import copyOk from "../assets/copy_ok.png"
+
+
+/** Copies the given text to the clipboard and shows a checkmark for 2 seconds. */
 export default function CopyButton(props) {
     const text = props.text;
 
@@ -33,12 +40,5 @@ export default function CopyButton(props) {
         <div className="copy-button-container">
             <img className="copy-icon" src={isCopied ? copyOk : copyIcon} alt="copy_button" onClick={handleCopy}/>
         </div>
-);
+    );
 }
-import {useState, useEffect} from "react";
-import './CopyButton.css';
-import copyIcon from "../assets/copy_button.png"
-import copyIconDark from "../assets/copy_button_dark.png"
-import copyOk from "../assets/copy_ok.png"
-
-import copyOkDark from "../assets/copy_ok_dark.png"
