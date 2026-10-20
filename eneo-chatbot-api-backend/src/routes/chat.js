@@ -213,6 +213,7 @@ router.post("/session", acceptOptionalFiles, async (req, res) => {
         // Första meddelandet skapar samtidigt ENEO-sessionen
         const eneoResponse = await createSession(message, assistantId, files);
 
+
         const eneoSessionId = eneoResponse.session_id;
 
         // Vårt eget ID som frontend får känna till
@@ -227,7 +228,8 @@ router.post("/session", acceptOptionalFiles, async (req, res) => {
         // Returnera INTE ENEO-ID:t
         return res.json({
             sessionId: proxySessionId,
-            response: eneoResponse.answer
+            response: removeRefs(eneoResponse.answer),
+            references: getInrefContents(eneoResponse.answer, eneoResponse.mcp_tool_references)
         });
 
     } catch (error) {
