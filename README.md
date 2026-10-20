@@ -1,22 +1,69 @@
-## Eneo Chatbot
+# ENEO Chatbot
 
-This program allows you to chat with an ENEO assistant without an account.
+A simple chat client for assistants hosted on ENEO.
 
-It consists of a frontend which is a ReactJS project, and a backend which is a Node server.
-To function, the server needs a .env that supplies the following:
+- **`eneo-chatbot-frontend/`** – React + Vite chat UI
+- **`eneo-chatbot-api-backend/`** – Express server that forwards requests to the ENEO API, so the API key stays off the browser
+
+Users can chat with an assistant and attach up to 5 files (images, PDF, TXT, MD, CSV) per message.
+
+The AI also provides a list of sources used in the response.
+
+## Requirements
+
+- Node.js 20.19+ or 22.12+
+- An ENEO API key and an assistant ID
+
+## Getting started
+
+### Backend
+
+```bash
+cd eneo-chatbot-api-backend
+npm install
+```
+
+Create a `.env` file:
+
+```env
+API_KEY=your-eneo-api-key
+ENEO_API_BASE_URL=https://your-eneo-instance/api/v1
+PORT=3001
+```
+
+Start it:
+
+```bash
+npm run dev
+```
+
+### Frontend
+
+```bash
+cd eneo-chatbot-frontend
+npm install
+npm run dev
+```
+
+Open:
 
 ```
-ENEO_API_BASE_URL:  URL to the ENEO API
-API_KEY:            Your API key
-PORT:               The port to run the backend.
+http://localhost:5173/eneo-chat-bot/?assistant_id=<ASSISTANT_ID>&server=false
 ```
-## Features
 
-You can, send text, images, text and PDF documents to the chatbot.
+- `assistant_id` – which ENEO assistant to use (required)
+- `server=false` – use the local backend on port 3001. Leave it out in production.
 
-You can pick an assistant of your choice (assuming the API key supports it) through the URL
+## Production
 
-example:
+```bash
+cd eneo-chatbot-frontend
+npm run build
+```
 
-**CHATBOT_URL**/?assistant_id=**ASSISTANT_ID**
+Serve `dist/` at `/eneo-chat-bot/` and forward `/eneo-chat-bot/api/` to the backend.
 
+## Good to know
+
+- Chat sessions are stored in memory and are lost when the backend restarts.
+- File types and size limits are set in both `frontend/src/fileUpload.js` and `backend/src/routes/chat.js` – keep them in sync.
