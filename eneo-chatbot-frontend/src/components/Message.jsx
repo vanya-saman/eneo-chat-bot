@@ -70,7 +70,7 @@ function Message(props) {
                 <ReactMarkdown>
                     {message.text}
                 </ReactMarkdown>
-                <Sources references={message.references}/>
+
                 <div className="message-footer-container">
                     {message.speaker === "ai" && (
                         <CopyButton text={message.text}/>
@@ -79,6 +79,7 @@ function Message(props) {
                         {message.time}
                     </div>
                 </div>
+                <Sources references={message.references}/>
             </div>
         </div>
     );
